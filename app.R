@@ -1228,6 +1228,13 @@ get_words_freqs_for_dates <- function(dates_inputs) {
   return(words_for_dates_without_common_words)
 }
 
+# Creamos una guía para cada pestaña de la aplicación utilizando la librería Cicerone.
+# Para ello, debemos guardar cada guía en una variable distinta, que luego utilizaremos
+# en el server.
+# Cada guía es creada con la función new() y le añadimos los pasos de cada parte
+# que queremos describir de la página con la función step(). Esta última función
+# recibe como argumentos el 'id' del atributo de la página, el título del paso de
+# la guía y la descripción que aparecerá debajo del título.
 
 guide_home_graphs <- Cicerone$
   new()$
@@ -1434,6 +1441,7 @@ ui <- fluidPage(
       )
     ),
     
+    
     # Creamos el cuerpo del tablero con la función dashboardBody(). Añadimos 'tabItems'
     # con los valores correspondientes de 'tabName' (los mismos que hemos usado en
     # dashboardSidebar()):
@@ -1460,6 +1468,7 @@ ui <- fluidPage(
               id = "mainTabsHome",
               tabPanel(
                 "Gráficos",
+                # Añadimos el botón para activar la guía de esta página.
                 div(
                   style = "float: right",
                   actionButton(inputId = "guide_home_graphs_button", label = "Guía")
@@ -1468,6 +1477,8 @@ ui <- fluidPage(
                 # Utilizamos la función sliderInput() para crear un control
                 # deslizante en la interfaz de usuario, de forma que permita
                 # seleccionar un valor dentro de un rango específico.
+                # El sliderInput() está encapsulado por un div() para poder referenciarlo
+                # en la guía guide_home_graphs.
                 div(
                   id = "num_words_wordcloud_slider",
                   sliderInput(
@@ -1483,28 +1494,35 @@ ui <- fluidPage(
                 plotOutput("plot_dendrogram")
               ),
               tabPanel("Autores",
+                       # Añadimos el botón para activar la guía de esta página.
                        div(
                          style = "float: right",
                          actionButton(inputId = "guide_home_authors_button", label = "Guía")
                        ),
                        HTML("<br><br><br><br>"),
                        # Añadimos una tabla (dataTableOutput()) con los autores y sus frecuencias.
+                       # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+                       # en la guía guide_home_authors.
                        div(
                          id = "dataTable_freq_authors",
                          dataTableOutput("freq_authors"))
                        ),
               tabPanel("Año de publicación",
+                       # Añadimos el botón para activar la guía de esta página.
                        div(
                          style = "float: right",
                          actionButton(inputId = "guide_home_published_year_button", label = "Guía")
                        ),
                        HTML("<br><br><br><br>"),
                        # Añadimos una tabla (tableOutput()) con el número de artículos publicados cada año.
+                       # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+                       # en la guía guide_home_published_year.
                        div(
                          id = "dataTable_year_article_date",
                          dataTableOutput("year_article_date"))
                        ),
               tabPanel("Revistas",
+                       # Añadimos el botón para activar la guía de esta página.
                        div(
                          style = "float: right",
                          actionButton(inputId = "guide_home_journals_button", label = "Guía")
@@ -1512,6 +1530,8 @@ ui <- fluidPage(
                        HTML("<br><br><br><br>"),
                        # Añadimos una tabla (dataTableOutput()) con el número de artículos publicados en
                        # las diferentes revistas.
+                       # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+                       # en la guía guide_home_journals.
                        div(
                          id = "dataTable_journals",
                          dataTableOutput("journals"))
@@ -1524,6 +1544,7 @@ ui <- fluidPage(
         tabItem(
           tabName = "articles",
           fluidPage(
+            # Añadimos el botón para activar la guía de esta página.
             div(
               style = "float: right",
               actionButton(inputId = "guide_articles_button", label = "Guía"),
@@ -1538,6 +1559,8 @@ ui <- fluidPage(
                               filtrar los artículos:",
               placeholder = "amygdala fst"
             ),
+            # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+            # en la guía guide_articles.
             div(
               id = "dataTable_found_documents",
               dataTableOutput("found_documents")
@@ -1554,6 +1577,7 @@ ui <- fluidPage(
               # Primera pestaña llamada "Información general sobre los clusters".
               tabPanel(
                 HTML("Información general sobre los <i>clusters</i>"),
+                # Añadimos el botón para activar la guía de esta página.
                 div(
                   style = "float: right",
                   actionButton(inputId = "guide_clusters_group_info_button", label = "Guía")
@@ -1564,12 +1588,15 @@ ui <- fluidPage(
               # Segunda pestaña llamada "Agrupación por propagación de afinidad".
               tabPanel(
                 HTML("Agrupación por propagación de afinidad"),
+                # Añadimos el botón para activar la guía de esta página.
                 div(
                   style = "float: right",
                   actionButton(inputId = "guide_clusters_affinity_groups_button", label = "Guía")
                 ),
                 HTML("<br><br>"),
                 # Añadimos una tabla (dataTableOutput()) con los ejemplares y sus keywords.
+                # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+                # en la guía guide_clusters_affinity_group.
                 div(
                   id = "dataTable_exemplar_keywords_df",
                   dataTableOutput("exemplar_keywords_df")
@@ -1577,6 +1604,8 @@ ui <- fluidPage(
                 # Creamos una lista de selección con selectInput() para que el usuario pueda
                 # elegir un elemento de una lista de valores (esta lista de valores corresponde
                 # con la lista de los ejemplares).
+                # El selectInput() está encapsulado por un div() para poder referenciarlo
+                # en la guía guide_clusters_affinity_group.
                 div(
                   id = "selectInput_exemplar_name",
                   selectInput(
@@ -1591,6 +1620,8 @@ ui <- fluidPage(
                 # Mostramos una tabla con el ejemplar seleccionado y los documentos del cluster
                 # que representa. Esta tabla contiene los hiperenlaces a pubmed de todos los
                 # documentos.
+                # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
+                # en la guía guide_clusters_affinity_group.
                 div(
                   id = "dataTable_table_for_exemplar_name",
                   dataTableOutput("table_for_exemplar_name")
@@ -1609,6 +1640,7 @@ ui <- fluidPage(
               # Primera pestaña llamada "Asociaciones de los factores influyentes".
               tabPanel(
                 HTML("Asociaciones de los factores influyentes"),
+                # Añadimos el botón para activar la guía de esta página.
                 div(
                   style = "float: right",
                   actionButton(inputId = "guide_influencing_factors_button", label = "Guía")
@@ -1644,6 +1676,7 @@ ui <- fluidPage(
               id = "mainTabsEvolution",
               # Primera pestaña llamada "Evolución de la información a lo largo del tiempo".
               tabPanel(HTML("Evolución de la información a lo largo del tiempo"),
+                       # Añadimos el botón para activar la guía de esta página.
                        div(
                          style = "float: right",
                          actionButton(inputId = "guide_information_evolution_button", label = "Guía")
@@ -1683,7 +1716,8 @@ ui <- fluidPage(
 ###### Servidor (server):
 
 server <- function(input, output, session) {
-  #
+  ###### Inicializamos con la función init() todas las guías que hemos creado, para
+  # así poder mostrarlas cuando se haga clic en sus correspondientes botones.
   guide_home_graphs$init()
   guide_home_authors$init()
   guide_home_published_year$init()
@@ -1694,6 +1728,8 @@ server <- function(input, output, session) {
   guide_influencing_factors$init()
   guide_information_evolution$init()
   
+  # Con la función observeEvent() podemos iniciar cada guía cuando se haga clic
+  # en su correspondiente botón.
   observeEvent(input$guide_home_graphs_button, {
     guide_home_graphs$start()
   })
@@ -1725,6 +1761,8 @@ server <- function(input, output, session) {
   observeEvent(input$guide_information_evolution_button, {
     guide_information_evolution$start()
   })
+  
+  
   ###### Generamos el wordcloud() con los términos más frecuentes del corpus primario.
   # En particular, usamos la función reactive() para utilizar el valor seleccionado por
   # el usuario en el sliderInput. 
