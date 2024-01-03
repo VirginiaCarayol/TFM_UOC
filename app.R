@@ -2,11 +2,13 @@
 ###### Este es el archivo app.R, el cual comienza cargando los paquetes necesarios 
 # (incluido el paquete shiny) y termina con una llamada a shinyApp().
 
+
 # Cargamos todos los paquetes necesarios.
 
 library(shiny)
 library(shinydashboard)
 library(shinythemes)
+library(shinyjs)
 library(easyPubMed)
 library(RISmed)
 library(tm)
@@ -25,41 +27,28 @@ library(ggplot2)
 library(cicerone)
 
 
-
-
 ###### Obtención de los datos de partida y creación de la matriz de términos-documentos.
 
 # Descargamos todos los abstracts con la función batch_pubmed_download() del paquete
-# easyPubMed en formato 'xml' para, después, separarlos. Esto tendrá la ventaja de que
-# podremos elegir quedarnos solo con el título y el abstract; si lo hacemos con la
-# función batch_pubmed_download() pero descargando los artículos en formato 'abstract'
-# (es decir, .txt), y posteriormente empleamos la función readabs() del paquete `
-# pubmed.mineR, también estaríamos analizando otra información como los autores, la revista, 
-# etc. (y por tanto, añadimos 'ruido' al análisis de textos). 
-
-# Para realizar una búsqueda en PubMed a través de easyPubMed, debemos hacer la consulta
-# en PubMed y recuperar los datos.
+# easyPubMed en formato 'xml' para, después, separarlos.
 
 # Para hacer la consulta, usamos la función get_pubmed_ids(), que recibe una cadena de
 # consulta como argumento (se aplica la sintaxis estándar de PubMed). Esta función 
 # devuelve una lista que contiene toda la información para, posteriormente, acceder y 
-# descargar estos resultados del servidor.
-
-# my_query <- "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract]"
-
-my_query <- "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract] AND amygdala[Title/Abstract]"
+# descargar estos resultados del servidor ('server').
 
 # Los registros se pueden recuperar del servidor mediante la función fetch_pubmed_data(), 
 # que recibe como argumento el resultado de la función get_pubmed_ids(). A su vez, los
 # registros se pueden solicitar en formato XML o TXT con el argumento 'format'. En 
-# particular, se permiten los siguientes valores: 'asn.1', 'xml', 'medline', 'uilist' 
-# y  'abstract', y vamos a utilizar el formato 'xml'. Los registros se recuperan
+# particular, vamos a utilizar el formato 'xml'. Por defecto, los registros se recuperan 
 # por lotes de 5000. 
 
-# Esta función devuelve un vector de tipo 'character'. Si el formato es 'xml', devuelve
-# una única cadena con todos los registros de PubMed (con etiquetas XML incrustradas).
-# Si se selecciona un formato diferente, devuelve un vector de cadenas, donde cada 
-# cadena corresponde con una línea del documento de salida.
+# La función fetch_pubmed_data() devuelve un vector de tipo 'character'. Si el formato es 'xml',
+# devuelve una única cadena con todos los registros de PubMed (con etiquetas XML incrustradas).
+
+my_query <- "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract]"
+
+# my_query <- "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract] AND amygdala[Title/Abstract]"
 
 my_query_ids <- get_pubmed_ids(pubmed_query_string = my_query)
 
@@ -81,45 +70,40 @@ if (dir.exists(my_dir)) {
 # La función batch_pubmed_download(), que realiza una consulta en PubMed (a través de
 # la función get_pubmed_ids()), descarga los datos resultantes (a través de múltiples 
 # llamadas a la función fetch_pubmed_data()) y luego guarda los datos en una serie 
-# de archivos xml o txt en la unidad local. Esta función es adecuada para descargar
-# una gran cantidad de registros.
+# de archivos XML o TXT en la unidad local. 
 
 # La función batch_pubmed_download() recibe, entre otros, los siguientes argumentos: 
 # 'pubmed_query_string' (cadena de búqueda en PubMed), 'dest_dir' (nombre de la carpeta 
-# existente donde se guardarán los archivos), 'format' (formato de los datos; puede ser 
-# 'abstract', 'xml', etc.). 
+# existente donde se guardarán los archivos), 'format' (formato de los datos).
 
 my_abstracts_download_xml <- batch_pubmed_download(
   pubmed_query_string = my_query, dest_file_prefix = "easyPubMed_data_xml", 
   dest_dir = my_dir, format = "xml")
 
-# El paquete XML nos permite analizar y generar XML dentro de R.
-
 separate_and_store_batch <- function(my_abstracts_download_xml, output_directory) {
   # Definimos la función separate_and_store_batch(), que separa y guarda el título y 
   # abstract (si existe) de los diferentes artículos en ficheros de texto individuales,
-  # denominados por el PMID del artículo en cuestión. 
-  # Iteramos sobre la lista de nombres de ficheros XML que nos hemos descargado.
-  for(fileIndex in 1:length(my_abstracts_download_xml)) {
-    fileName <- my_abstracts_download_xml[fileIndex]
+  # denominados por el PMID del artículo en cuestión. La función espera que el argumento
+  # 'my_abstracts_download_xml' sea la lista de ficheros XML que contienen el lote
+  # de artículos.
+  for (fileName in my_abstracts_download_xml) {
     # Sacamos el camino completo al fichero XML que hemos descargado.
     filePath <- paste(my_dir, fileName, sep = "/")
     # Con la función xmlParse() del paquete XML, leemos el fichero para poder usar 
     # los datos en R.
     xml <- xmlParse(filePath)
     # Sacamos todos los distintos nodos de <PubmedArticle> que se encuentran dentro de
-    # <PubmedArticleSet> con la función getNodeSet() (Nota: se ha empleado la página web
-    # https://jsonformatter.org/xml-viewer para visualizar previamente uno de los archivos
-    # XML y conocer los XPath).
+    # <PubmedArticleSet> con la función getNodeSet() del paquete XML (Nota: se ha empleado
+    # la página web https://jsonformatter.org/xml-viewer para visualizar previamente uno
+    # de los archivos XML y conocer los XPath).
     pubmedArticles <- getNodeSet(xml, "/PubmedArticleSet/PubmedArticle")
-    for(pubmedArticleIndex in 1:length(pubmedArticles)) {
-      pubmedArticle <- pubmedArticles[[pubmedArticleIndex]]
+    for (pubmedArticle in pubmedArticles) {
       # Sacamos el nodo donde se encuentra el PMID, para poder usarlo como nombre del
       # fichero nuevo.
       pmid <- getNodeSet(pubmedArticle, "MedlineCitation/PMID")
-      # Sacamos el texto del nodo con la función xmlValue().
+      # Sacamos el texto del nodo con la función xmlValue() del paquete XML.
       pmidText <- xmlValue(pmid[[1]])
-      # Aseguramos que existe el directorio donde vamos a guardar los ficheros
+      # Nos aseguramos de que existe el directorio donde vamos a guardar los ficheros.
       dir.create(file.path(my_dir, output_directory), showWarnings = FALSE)
       # Establecemos el camino completo del nuevo fichero que vamos a crear.
       newFilePath <- paste(my_dir, "/", output_directory, "/", pmidText, ".txt", sep = "")
@@ -132,11 +116,10 @@ separate_and_store_batch <- function(my_abstracts_download_xml, output_directory
       # Sacamos todos los distintos nodos de <AbstractText>.
       abstractTexts <- getNodeSet(pubmedArticle, 
                                   "MedlineCitation/Article/Abstract/AbstractText")
-      # En caso de que abstractTexts tiene longitud mayor a 0 (es decir, no esté vacío
+      # En caso de que abstractTexts tenga una longitud mayor a 0 (es decir, no esté vacío
       # (disponemos del abstract)): 
       if (length(abstractTexts) > 0) {
-        for(abstractTextIndex in 1:length(abstractTexts)) {
-          abstractText <- abstractTexts[[abstractTextIndex]]
+        for (abstractText in abstractTexts) {
           # Sacamos el texto de cada nodo <AbstractText> y lo añadimos al fichero creado
           # anteriormente (con el argumento 'append = TRUE').
           abstractTextText <- xmlValue(abstractTexts[[1]])
@@ -153,35 +136,25 @@ separate_and_store_batch(my_abstracts_download_xml, xmls_folder)
 
 # El objeto principal para gestionar documentos con el paquete tm es el objeto de clase
 # 'Corpus', que representa una colección de documentos de texto. Para crear objetos 
-# de clase 'Corpus', podemos emplear la función Corpus(), que recibe, entre otros, el 
-# argumento 'x' que puede ser un 'DataframeSource', 'DirSource' o 'VectorSource'. 
-# En nuestro caso, usamos un 'DirSource', que recibe, entre otros, los siguientes 
-# argumentos: 'directory' (directorio donde se encuentran nuestros documentos .txt, 
-# uno para cada abstract) y 'pattern' (una expresión regular opcional; sólo se devolverán
-# los nombres de los archivos que coincidan con la expresión regular). 
+# de clase 'Corpus', podemos emplear la función Corpus() pasándole como argumento 'x'
+# un 'DirSource'. Éste recibe, entre otros, los siguientes argumentos: 'directory'
+# (directorio donde se encuentran nuestros documentos .txt, uno para cada abstract)
+# y 'pattern' (una expresión regular opcional; sólo se devolverán los nombres de
+# los archivos que coincidan con la expresión regular). 
 
 my_corpus_tm_raw <- Corpus(x = DirSource(paste(my_dir, xmls_folder, sep = "/"), 
                                          pattern = ".txt"))
 
-# Lo primero que vamos a hacer es llevar a cabo el preprocesamiento inicial de los datos:
-# eliminar puntuaciones, números, espacios en blanco adicionales, llevar a cabo la
-# derivación de las palabras, etc. Para ello, utilizaremos funciones de transformación. 
+# Lo primero que vamos a hacer es llevar a cabo el preprocesamiento inicial de los datos.
+# Para ello, utilizaremos funciones de transformación con la función tm_map() del paquete
+# tm. 
 
-# Para aplicar funciones de transformación, utilizamos la función tm_map() del paquete
-# tm. En concreto, aplicamos las transformaciones 'removePunctuation', 'removeNumbers',
-# 'stripWhitespace' y 'stemDocument'.
+# Eliminamos las puntuaciones, los espacios en blanco adicionales y los números, y
+# sacamos las derivaciones de las palabras.
 
 my_corpus_tm <- tm_map(my_corpus_tm_raw, removePunctuation)
-
 my_corpus_tm <- tm_map(my_corpus_tm, stripWhitespace)
-
-# Podríamos plantearnos no eliminar los números: si queremos buscar asociaciones con
-# palabras como 'day' o 'month' para saber la edad de los ratones empledas, no podemos
-# eliminar los números. Sin embargo, cuando se prueba, empeora notablemente los 
-# resultados obtenidos, asi que se decide eliminarlos. 
-
 my_corpus_tm <- tm_map(my_corpus_tm, removeNumbers)
-
 my_corpus_tm <- tm_map(my_corpus_tm, stemDocument)
 
 # También deseamos eliminar palabras comunes en inglés (palabras vacías). Para ello, 
@@ -192,24 +165,9 @@ my_corpus_tm <- tm_map(my_corpus_tm, stemDocument)
 my_corpus_tm <- tm_map(my_corpus_tm, removeWords, stopwords("english"))
 
 # A continuación, expresamos nuestro corpus como una matriz de términos-documentos. 
-# Para ello, hay dos tipos, la matriz 'TermDocument' y la matriz 'DocumentTerm', cuya
-# única diferencia es cómo se asignan las variables a los ejes 'x' e 'y' de la matriz. 
-# 'TermDocument' significa que los términos están en las filas y los documentos
-# en las columnas, y 'DocumentTerm' es lo contrario (documentos en las filas y términos
-# en las columnas). Para crear dichas matrices encontramos las funciones 
-# TermDocumentMatrix() y DocumentTermMatrix() del paquete tm, respectivamente. 
-
-# Vamos trabajar con la matriz de términos-documentos ('TermDocumentMatrix').
+# Para crear dicha matriz encontramos la función TermDocumentMatrix() del paquete tm.
 
 my_tdm <- TermDocumentMatrix(my_corpus_tm)
-
-# Podemos emplear el modelo tf-idf o prescindir de las palabras vacías. En este trabajo
-# se han analizado ambas opciones y se ha elegido finalmente la opción de eliminar las
-# palabras vacías debido a que con el modelo tf-idf quedan representadas, aunque con
-# frecuencias normalizadas, muchas palabras comunes del inglés. 
-
-
-
 
 ###### Inicio: gráficos, autores, año de publicación y revistas.
 
@@ -221,12 +179,10 @@ my_tdm <- TermDocumentMatrix(my_corpus_tm)
 # entre todos los documentos. Para ello, empleamos el paquete wordcloud, así como 
 # RColorBrewer para los colores. 
 
-# Transformamos nuestra matriz en un dataframe con la función as.data.frame() 
-# (transformándola primero en una matriz con la función as.matrix()).
+# Transformamos el objeto de tipo 'TermDocument' en un dataframe para poder trabajar
+# fácilmente con los datos.
 
-my_matrix_tdm <- as.matrix(my_tdm)
-
-my_df_tdm <- as.data.frame(my_matrix_tdm)
+my_df_tdm <- as.data.frame(as.matrix(my_tdm))
 
 # Sumamos las frecuencias de los términos en todos los documentos con la función rowSums(), 
 # y ordenamos los términos por orden descendente de frecuencia con la función sort(). 
@@ -246,27 +202,11 @@ df_words <- data.frame(word = names(words), freq = words)
 # aleatoria; si no, se representar por orden decreciente), 'random.color' (si es 'FALSE',
 # el color se eligirá en función de su frecuencia), 'rot.per' (proporción de palabras 
 # representadas con una rotación de 90 grados) y 'colors' (colores para representar las
-# palabras de menor a mayor frecuencia). 
-# 
-# wordcloud(words = df_words$word, freq = df_words$freq, min.freq = 1, max.words = 100,
-#           random.order = FALSE, random.color = FALSE, rot.per = 0.50,
-#           colors = brewer.pal(8, "Dark2"), scale = c(3.5, 0.5))
+# palabras de menor a mayor frecuencia).
 
-###### Representamos dicho wordcloud() en la página web.
-
-
-
+# Representamos dicho wordcloud() en la página web como parte del trabajo del 'server'.
 
 ###### Dendrograma de las 100 palabras más frecuentes. 
-
-# Sumamos las frecuencias de los términos en todos los documentos con la función rowSums(), 
-# y ordenamos los términos por orden descendente de frecuencia con la función sort(). 
-
-my_matrix_tdm_freq <- as.matrix(sort(rowSums(my_df_tdm), decreasing = TRUE))
-
-# A continuación, obtenemos los 100 términos más frecuentes con la función rownames().
-
-terms_freq_tdm <- rownames(my_matrix_tdm_freq)[1:100]
 
 # Seleccionamos del dataframe 'TermDocument' los 100 términos más frecuentes hallados 
 # anteriormente, y calculamos la distancia del coseno entre ellos con la función dist() 
@@ -274,24 +214,16 @@ terms_freq_tdm <- rownames(my_matrix_tdm_freq)[1:100]
 # que la función dist() calcula distancias, no similitudes. Por tanto, al utilizar el 
 # método "cosine", se obtiene la distancia del coseno, no la similitud del coseno. Para
 # obtener la similitud del coseno (valores mayores entre dos términos indican mayor 
-# similitud), usamos '1 - distancia del coseno'. Finalmente, empleamos las funciones
-# hclust() y plot(). 
+# similitud), usamos '1 - distancia del coseno'. Finalmente, empleamos la función
+# hclust() para generar el dendrograma. 
+
+# Luego, en el 'server', utilizaremos la función plot() para representarlo.
+
+terms_freq_tdm <- rownames(df_words)[1:100]
 
 cosine_dist_terms_100 <- 1 - proxy::dist(my_df_tdm[terms_freq_tdm,], method = "cosine")
 
 hclust_cosine_dist_terms_100 <- hclust(cosine_dist_terms_100, method = "ward")
-
-# plot(hclust_cosine_dist_terms_100, cex = 1)
-
-###### Representamos el dendrograma de los 100 términos más frecuentes del corpus primario 
-# en la página web. 
-
-
-
-###### Incluir otra información general interesante sobre el corpus primario, como
-# los autores ordenados de manera decreciente por el número de publicaciones que poseen
-# sobre el tema en cuestión, el número de artículos publicados cada año o las 
-# principales revistas donde se han publicado. 
 
 ###### Autores ordenados de manera decreciente por el número de publicaciones que poseen
 # sobre el tema en cuestión.
@@ -300,12 +232,9 @@ hclust_cosine_dist_terms_100 <- hclust(cosine_dist_terms_100, method = "ward")
 # del paquete RISmed obtiene información resumida sobre los resultados de una
 # consulta en cualquier base de datos de NCBI. Esta función recibe, entre otros argumentos,
 # 'query' (corresponde con la consulta como se indica en el cuadro de búsqueda de NCBI; 
-# en nuestro caso, vamos a usar los términos mencionados previamente, de forma que la 
-# consulta corresponde con 'mice[Title/Abstract]+stress[Title/Abstract]+ 
-# depression[Title/Abstract]+behavior[Title/Abstract]+test[Title/Abstract]'), 'type' 
-# (tipo de 'NCBI Eutility' o utilidades electrónicas; en nuestro caso usamos la opción 
-# 'esearch', obteniendo la estructura de la consulta) y 'db' (base de datos de NCBI 
-# utilizada; en nuestro caso, 'pubmed'). 
+# utilizamos la query definida anteriormente para consultar PubMed), 'type' (tipo de 'NCBI Eutility'
+# o utilidades electrónicas; en nuestro caso usamos la opción 'esearch', obteniendo la estructura
+# de la consulta) y 'db' (base de datos de NCBI utilizada; en nuestro caso, 'pubmed'). 
 
 # La función EUtilsSummary() devuelve un objeto de clase EUtilsSummary, y con ella 
 # obtenemos un resultado equivalente al obtenido con la función get_pubmed_ids() del 
@@ -316,25 +245,21 @@ my_query_RISmed <- EUtilsSummary(query = my_query, type = "esearch", db = "pubme
 # La función EUtilsGet() nos permite acceder a los resultados de una consulta en cualquier
 # base de datos del NCBI. Esta función recibe cualquiera de los vectores de identificadores
 # de registros NCBI, es decir, identificadores devueltos por EUtilsSummary o el objeto 
-# EUtilsSummary en sí (argumento 'x'). Por tanto, al igual que con el paquete easyPubMed,
-# la función EUtilsSummary() recopila información pertinente sobre las publicaciones de 
-# nuestra búsqueda y almacena la información para su análisis; podemos acceder a nuestros 
-# datos con la función EUtilsGet(). Además, recibe los argumentos 'type', que indica el  
-# tipo de 'NCBI Eutility', y 'db', que indica la base de datos de NCBI que se utiliza 
-# para hacer la consulta. 
+# EUtilsSummary en sí (argumento 'x'). Por tanto, la función EUtilsSummary() recopila información
+# pertinente sobre las publicaciones de nuestra búsqueda y almacena la información para
+# su análisis; podemos acceder a nuestros datos con la función EUtilsGet(). Además, recibe
+# los argumentos 'type', que indica el  tipo de 'NCBI Eutility', y 'db', que indica la 
+# base de datos de NCBI que se utiliza para hacer la consulta. 
 
 # La función EUtilsGet() devuelve un objeto de clase Medline.
 
 EUtilsGet_my_query <- EUtilsGet(x = my_query_RISmed, type = "efetch", db = "pubmed")
 
-# En el paquete RISmed hay muchas funciones, y la mayoría reciben como argumento un 
-# objeto de clase EUtilsSummary o de clase Medline.
-
-# Con estos datos podemos, por ejemplo, revisar cuántas publicaciones tienen los 
-# investigadores sobre el tema en cuestión. Para ello, usamos la función Author() del
-# paquete RISmed, que recibe el objeto de clase Medline creado anteriormente, y que 
-# devuelve una lista de dataframes (un dataframe por cada artículo, que contiene, entre
-# otros, los campos 'LastName' (apellidos), 'ForeName' (nombre) e 'Initials' (iniciales)).
+# Con estos datos podemos revisar cuántas publicaciones tienen los investigadores 
+# sobre el tema en cuestión. Para ello, usamos la función Author() del paquete RISmed,
+# que recibe el objeto de clase Medline creado anteriormente, y que devuelve una 
+# lista de dataframes (un dataframe por cada artículo, que contiene, entre otros,
+# los campos 'LastName' (apellidos), 'ForeName' (nombre) e 'Initials' (iniciales)).
 
 authors <- Author(EUtilsGet_my_query)
 
@@ -358,44 +283,32 @@ author_df <- data.frame(Author = names(author_counts), Frequency = as.numeric(au
 
 author_df <- author_df[order(author_df$Frequency, decreasing = TRUE),]
 
+# Eliminamos los nombres de las filas para que, al ordenar el dataframe por alguna de
+# sus columnas, el nombre de la fila se vuelva a generar y así se represente de manera
+# más ordenada en la aplicación web.
+
 rownames(author_df) <- NULL
 
-###### Incluimos en la página web la información sobre los autores ordenados de 
-# manera decreciente por el número de publicaciones que poseen sobre el tema en cuestión.
-
-
+# Incluimos en el 'server' la información sobre los autores ordenados de manera decreciente
+# por el número de publicaciones que poseen sobre el tema en cuestión.
 
 ###### Número de artículos publicados cada año.
 
-# El paquete RISmed contiene numerosas funciones que se aplican sobre un objeto de 
-# clase Medline, que se define también en el paquete RISmed (como mencionamos, con la
-# función EUtilsGet() obtenemos un objeto de clase Medline). Por ejemplo, la función 
-# Keywords() extrae las palabras clave de cada registro del objeto de clase Medline, 
-# la función Language() extrae el idioma, la función AbstractText() el texto del 
-# resumen de los artículos, YearArticleDate() el año de publicación de los artículos, 
-# etc.
-
-# En particular, vamos a extraer el año de publicación de los artículos con la función
-# YearArticleDate() para mostrar esta información en la página web. 
+# Extraemos el año de publicación de los artículos con la función YearArticleDate() 
+# para mostrar esta información en la página web. 
 
 year_article_date <- data.frame(table(YearArticleDate(EUtilsGet_my_query)))
 
 colnames(year_article_date) <- c("Year", "Frequency")
 
-###### Incluimos en la página web la información sobre el año de publicación de los
-# artículos. 
-
-
+# Incluimos en el 'server' la información sobre el año de publicación de los artículos. 
 
 ###### Principales revistas donde se han publicado los artículos del corpus primario.
 
-# Como mencionamos, la función batch_pubmed_download() recibe, entre otros, los siguientes
-# argumentos: 'pubmed_query_string' (cadena de búqueda en PubMed), 'dest_dir' (nombre de
-# la carpeta existente donde se guardarán los archivos), 'format' (formato de los datos;
-# puede ser 'abstract', 'xml', etc.; puede usarse '!="xml"' para guardar los datos como
-# archivos de texto (.txt)). En este caso, usamos el formato 'abstract' para guardar 
-# los datos como archivos de texto, ya que a continuación usaremos la función readabs()
-# del paquete pubmed.mineR para crear un objeto S4 de clase 'Abstract'. 
+# Empleamos de nuevo la función batch_pubmed_download(), pero, en este caso, usamos el 
+# formato 'abstract' para guardar los datos como archivos de texto, ya que a continuación
+# usaremos la función readabs() del paquete pubmed.mineR para crear un objeto de clase 
+# 'Abstract'. 
 
 my_abstracts_download <- batch_pubmed_download(pubmed_query_string = my_query, 
                                                dest_dir = my_dir, format = "abstract")
@@ -410,8 +323,7 @@ append_txt_batch <- function(my_abstracts_download, easyPubMed_data_final) {
   # Iteramos sobre la variable my_abstracts_download, que contiene los archivos de 
   # texto descargados con la función batch_pubmed_download(), para añadir su contenido
   # al archivo creado anteriormente con la función file.append(). 
-  for(fileIndex in 1:length(my_abstracts_download)) {
-    batch_file <- my_abstracts_download[fileIndex]
+  for (batch_file in my_abstracts_download) {
     file.append(paste(my_dir, "/", easyPubMed_data_final, ".txt", sep = ""), 
                 paste(my_dir, "/", batch_file, sep = ""))
   }
@@ -422,15 +334,15 @@ append_txt_batch <- function(my_abstracts_download, easyPubMed_data_final) {
 append_txt_batch(my_abstracts_download, "easyPubMed_data_final")
 
 # A continuación, utilizamos la función readabs() del paquete pubmed.mineR para crear 
-# un objeto S4 de clase 'Abstract' y un archivo de texto con encabezados ('Journal', 
+# un objeto de clase 'Abstract' y un archivo de texto con encabezados ('Journal', 
 # 'Abstract' y 'PMID') delimitados por tabulaciones (con el nombre de 'newabs.txt').
 # Como hemos mencionado, tras concatenar los archivos descargados, en este caso, 
 # "easyPubMed_data_final.txt" (es el nombre que le hemos puesto) contiene toda la 
 # información.
 
-s4_Object <- readabs(paste(my_dir, "/easyPubMed_data_final.txt", sep = ""))
+abstract_Object <- readabs(paste(my_dir, "/easyPubMed_data_final.txt", sep = ""))
 
-# Los objetos S4 de clase 'Abstract' contienen tres propiedades, 'Journal', 'Abstract' 
+# Los objetos de clase 'Abstract' contienen tres propiedades, 'Journal', 'Abstract' 
 # y 'PMID', para almacenar resúmenes de PubMed. En particular, 'Journal' es un objeto 
 # de clase 'character' que almacena las revistas de los resúmenes de PubMed, 'Abstract'
 # es un objeto de clase 'character' que almacena los resúmenes de PubMed, y 'PMID' es 
@@ -459,11 +371,11 @@ pattern <- '\\d+\\.\\s(.+?)\\.'
 # y '\\.' (coincide con un punto).
 
 # str_match() del paquete stringr se utiliza para aplicar esta expresión regular a
-# las cadenas de texto contenidas en s4_Object@Journal. Luego, '[, 2]' se utiliza 
+# las cadenas de texto contenidas en abstract_Object@Journal. Luego, '[, 2]' se utiliza 
 # para acceder al contenido capturado por el grupo de captura, que es el texto que
 # viene después del número y el punto inicial.
 
-journals_pattern <- str_match(s4_Object@Journal, pattern)[,2]
+journals_pattern <- str_match(abstract_Object@Journal, pattern)[,2]
 
 # Transformamos el vector de tipo carácter a un dataframe y cambiamos el nombre de 
 # las columnas. 
@@ -479,11 +391,8 @@ journals_df <- journals_df[order(-journals_df$Frequency),]
 
 rownames(journals_df) <- NULL
 
-
-
-
-###### Lista de los artículos disponibles que cumplen con los valores especificados por
-# el usuario para los factores influyentes. 
+###### Artículos: lista de los artículos disponibles que cumplen con los valores 
+# especificados por el usuario para los factores influyentes. 
 
 # Utilizamos el corpus con las modificaciones 'removePunctuation' y 'stripWhitespace' 
 # (no utilizamos la derivación ya que si no tendríamos que aplicarla también a las
@@ -562,8 +471,7 @@ make_pmid_title_map <- function(my_abstracts_download_xml) {
   pmid_title_map <- hash()
   # Iteramos sobre los documentos descargados anteriormente con la función 
   # batch_pubmed_download() del paquete easyPubMed.
-  for(fileIndex in 1:length(my_abstracts_download_xml)) {
-    fileName <- my_abstracts_download_xml[fileIndex]
+  for(fileName in my_abstracts_download_xml) {
     # Sacamos el camino completo al fichero XML que hemos descargado.
     filePath <- paste(my_dir, fileName, sep = "/")
     # Con la función xmlParse() del paquete XML, leemos el fichero para poder usar 
@@ -596,18 +504,18 @@ make_pmid_title_map <- function(my_abstracts_download_xml) {
 pmid_title_map <- make_pmid_title_map(my_abstracts_download_xml)
 
 link_for_document <- function(PMID_document){
-  # Definimos la función link_for_document(), que genera el hiperenlace HTML para PubMed
+  # Definimos la función link_for_document(), que genera el HTML del hiperenlace para PubMed
   # de un documento dado a partir de su PMID. 
   # Para ello, empleamos la función sprintf(), que devuelve un vector de caracteres que
   # contiene una combinación formateada de texto y valores de variables, para generar 
-  # el hiperenlace HTML. 
+  # el HTML. 
   # La etiqueta HTML '<a>' define un hiperenlace, y tiene la siguiente sintaxis:
   # '<a href = "url"> texto del enlace </a>' (como 'texto del enlace', aparecerá el
   # PMID del documento). Por último, especificamos el destino del enlace con el atributo
   # 'target'; en particular, el enlace se abriá en una ventana nueva ('target = "_blank"').
   link <- sprintf('<a href = "https://pubmed.ncbi.nlm.nih.gov/%s" target="_blank">%s</a>', 
                   PMID_document, PMID_document)
-  # Devolvemos el hiperenlace HTML. 
+  # Devolvemos el HTML. 
   return(link)
 }
 
@@ -641,28 +549,18 @@ get_document_titles <- function(document_file_names, pmid_title_map) {
   return(pmid_titles)
 }
 
-###### Incluimos en la página web la herramienta para filtrar los artículos por los
-# términos introducidos por el usuario empleando las funciones descritas anteriormente.
+# Incluimos en el 'server' la herramienta para filtrar los artículos por los términos 
+# introducidos por el usuario empleando las funciones descritas anteriormente.
 
+###### Clusters: información general y agrupación por propagación de afinidad.
 
-
-
-###### Proporcionar visualizaciones de los datos en la aplicación web que muestren
-# qué documentos se agrupan por propagación de afinidad y cuántos grupos o clusters
-# se forman a partir del corpus primario. 
+# A continuación, proporcionamos visualizaciones de los datos en la aplicación web 
+# que muestren qué documentos se agrupan por propagación de afinidad y cuántos grupos 
+# o clusters se forman a partir del corpus primario. 
 
 # Utilizaremos el paquete slam de R para calcular la medida del coseno entre los documentos
 # del corpus primario, y posteriormente aplicaremos la función apcluster() del paquete
 # apcluster a esta matriz de similitud. 
-
-# Nota: no hemos creado la matriz de términos-documentos con el paquete 
-# pubmed.mineR, en particular, con la función tdm_for_lsa(), ya que esta recibe los 
-# argumentos 'object' (objeto S4 de clase 'Abstracts') e 'y' (vector de caracteres 
-# especificando los términos), y queremos hacerlo con todos los términos.
-
-# Nota2: en el paquete pubmed.mineR encontramos la función cos_sim_calc() 
-# para calcular la medida del coseno, pero tarda demasiado tiempo (no llegamos a 
-# obtener un resultado).
 
 # Calculamos la similitud del coseno entre documentos siguiendo su definición matemática
 # (es decir, su fórmula). 
@@ -701,7 +599,7 @@ cosine_dist_doc_slam <- crossprod_simple_triplet_matrix(my_tdm)/
 cosine_dist_doc_slam_apcluster <- apcluster(negDistMat(r = 1), 
                                             x = cosine_dist_doc_slam)
 
-###### A continuación, vamos a representar un gráfico para cada ejemplar y sus clusters.
+# A continuación, vamos a representar un gráfico para cada ejemplar y sus clusters.
 # Para obtener la información sobre los ejemplares y clusters:
 
 exemplars <- cosine_dist_doc_slam_apcluster@exemplars
@@ -715,13 +613,7 @@ exemplars <- str_remove_all(rownames(data.frame(exemplars)), ".txt")
 
 # En el caso de cluster_info, lo haremos durante la representación. 
 
-# Antes de continuar con las representaciones, sería interesante analizar los ejemplares 
-# de estos clusters, ver cuáles son sus palabras clave, para ver el tema que caracteriza
-# cada cluster. Además, también es interesante mostrar un dendrograma con los ejemplares
-# para ver qué clusters se asemejan más. De esta manera, el usuario podría elegir el 
-# cluster en el que está más interesado. 
-
-###### Dendrograma de los ejemplares para ver qué clusters se asemejan más. 
+# Continuamos con el dendrograma de los ejemplares para ver qué clusters se asemejan más. 
 
 # Creamos la matriz 'DocumentTerm' con la función DocumentTermMatrix() del paquete tm.
 
@@ -729,30 +621,25 @@ my_dtm <- DocumentTermMatrix(my_corpus_tm)
 
 # Transformamos nuestra matriz en un dataframe con la función as.data.frame().
 
-my_matrix_dtm <- as.matrix(my_dtm)
-
-my_df_dtm <- as.data.frame(my_matrix_dtm)
+my_df_dtm <- as.data.frame(as.matrix(my_dtm))
 
 # Seleccionamos los ejemplares de la matrix DocumentTerm. 
 
 my_df_dtm_exemplars <- my_df_dtm[exemplars,]
 
-# Al igual que hicimos anteriormente para los términos, calculamos la distancia del
-# coseno entre los documentos ejemplares con la función dist() del paquete proxy y el
-# argumento 'method = "cosine"'. Como la función dist() calcula distancias, no similitudes,
-# al utilizar el método "cosine", se obtiene la distancia del coseno, no la similitud 
-# del coseno. Para obtener la similitud del coseno (valores mayores entre dos términos
-# indican mayor similitud), usamos '1 - distancia del coseno'.
+# Al igual que hicimos anteriormente para los términos, usamos la función dist() del 
+# paquete proxy y el argumento 'method = "cosine"', junto con '1 - distancia del coseno' 
+# para obtener la similitud del coseno.
 
 cosine_dist_exemplars <- 1 - proxy::dist(my_df_dtm_exemplars, method = "cosine")
 
-# Representamos el dendrograma con la función hclust() y plot().
+# Finalmente, empleamos la función hclust() para generar el dendrograma. 
+
+# Luego, en el 'server', utilizaremos la función plot() para representarlo.
 
 hclust_cosine_dist_exemplars <- hclust(cosine_dist_exemplars, method = "ward")
 
-# plot(hclust_cosine_dist_exemplars, cex = 1)
-
-###### Para ver el tema que caracteriza a cada cluster, podemos analizar cuáles son
+# Para ver el tema que caracteriza a cada cluster, podemos analizar cuáles son
 # las palabras clave o keywords de los ejemplares.
 
 # Anteriormente usamos el paquete RISmed. En este paquete encontramos la función 
@@ -799,14 +686,15 @@ make_exemplar_keywords_df <- function(keywords_exemplars) {
 
 exemplar_keywords_df <- make_exemplar_keywords_df(keywords_exemplars)
 
-###### Añadimos dicha información en forma de tabla en la aplicación web para que el 
-# usuario pueda elegir posteriormente el cluster en el que está interesado, ver su 
-# gráfica y los documentos que forman parte de dicho cluster. 
+# Añadimos dicha información en forma de tabla en el 'server' para que el usuario pueda
+# elegir posteriormente el cluster en el que está interesado, ver su gráfica y los 
+# documentos que forman parte de dicho cluster. 
 
-###### Añadimos un desplegable para que el usuario elija el ejemplar en el que está
-# interesado para ver el cluster que representa (gráfica, documentos del cluster, etc).
+# Con estos datos, añadimos en el 'server' también un desplegable para que el usuario 
+# elija el ejemplar en el que está interesado para ver el cluster que representa 
+# (gráfica, documentos del cluster, etc).
 
-###### Llevamos a cabo la representación del ejemplar con los documentos de su cluster 
+# Llevamos a cabo la representación del ejemplar con los documentos de su cluster 
 # que el usuario haya elegido.
 
 # Hallamos el número total de clusters.
@@ -845,15 +733,9 @@ plot_for_exemplar_name <- function(exemplar_name){
        col = "black")
 }
 
-# Ejemplo de la representación del cluster donde el ejemplar es "37725330".
-
-# plot_for_exemplar_name("37725330")
-
-
-
-###### Mostramos una tabla con los documentos del cluster seleccionado por el usuario (incluido 
-# el ejemplar), de forma que el usuario puede hacer click sobre cualquiera de ellos y 
-# acceder a PubMed para leer dicho artículo. 
+# Mostramos una tabla con los documentos del cluster seleccionado por el usuario (incluido 
+# el ejemplar), de forma que el usuario puede hacer clic sobre cualquiera de ellos y 
+# acceder a PubMed para leer dicho artículo. Para ello, definimos la siguiente función. 
 
 table_for_exemplar_name <- function(exemplar_name){
   # Definimos la función table_for_exemplar_name(), que, dado un ejemplar, nos devuelve
@@ -866,7 +748,7 @@ table_for_exemplar_name <- function(exemplar_name){
   # Obtenemos los nombres de los documentos del cluster del ejemplar seleccionado. 
   documents_for_exemplar <- sub("\\.txt$", "", rownames(cosine_dist_doc_slam))[cluster_index]
   # Generamos los hiperenlaces para cada documento aplicando la función link_for_document()
-  # definida anteriormente. 
+  # definida anteriormente y lapply().
   documents_hyperlinks <- lapply(documents_for_exemplar, link_for_document)
   # Usamos la función paste() para concatenar los hiperenlaces del cluster del ejemplar 
   # seleccionado. 
@@ -881,13 +763,7 @@ table_for_exemplar_name <- function(exemplar_name){
   return(exemplar_cluster_df)
 }
 
-
-
-
-###### A continuación, estamos interesados en encontrar los términos asociados a otros
-# términos que, en nuestro caso, corresponderán con los diferentes factores influyentes 
-# (en particular, los factores influyentes en los que estamos interesados son 
-# “strain”, “age”, “gender”, “sex”, “area”, “stress” y “test”).
+###### Factores influyentes. 
 
 # Es interesante comenzar con la función findAssocs() del paquete tm, que encuentra 
 # asociaciones en una matriz documento-término o término-documento. En particular,
@@ -902,13 +778,8 @@ my_tdm_Assocs <- findAssocs(x = my_tdm, terms = c("strain", "age", "gender", "se
 
 # Nos ayudaremos de estos resultados para elegir los términos entre los cuáles queremos
 # examinar la fuerza de asociación utilizando la función de similitud del coseno y 
-# el análisis semántico latente (LSA). Esto es debido a que si solo elegimos los 
-# términos que hemos mencionado como factores influyentes, solo hallaremos la fuerza
-# de asociación entre ellos, y es interesante ver si se asocian diferentes valores
-# de un factor influyente con otros valores de otro factor influyente. 
-
-# Además, podemos añadir otros términos aunque no hayan salido en el resultado anterior, 
-# como las cepas más ampliamente utilizadas, etc.
+# el análisis semántico latente (LSA). Además, podemos añadir otros términos aunque 
+# no hayan salido en el resultado anterior, como las cepas más ampliamente utilizadas.
 
 influencing_factors <- c("strain", "balbc", "c57bl", "age", "old", "adult", "young", 
                          "neonate", "male", "female", "suprachiasmat", "septal",
@@ -924,10 +795,8 @@ influencing_factors <- c("strain", "balbc", "c57bl", "age", "old", "adult", "you
 # 'x' (vector de caracteres con las palabras derivadas que queremos completar), 
 # 'dictionary' (un Corpus donde buscar las posibles palabras de las que provienen estas
 # derivaciones) y 'type' (una cadena de caracteres indicando las heurísticas a utilizar: 
-# 'prevalent' (toma la coincidencia más frecuente encontrada), 'firt' (toma la primera
-# coincidencia encontrada), 'longest' (toma la coincidencia más larga en términos de 
-# caracteres), 'random' (toma cualquier coincidencia) y 'shortest' (toma la coincidencia
-# más corta en términos de caracteres)).
+# en este caso, utilizamos 'type = "prevalent"', que toma la coincidencia más frecuente
+# encontrada).
 
 influencing_factors_with_stemCompl <- stemCompletion(x = influencing_factors, 
                                                 dictionary = my_corpus_tm_raw, 
@@ -959,6 +828,8 @@ get_influencing_factors_stemCompl <-
     # Devolvemos el vector con las palabras completas.
     return(influencing_factors_stemCompl)
   }
+
+# Aplicamos la función anterior a nuestros datos:
 
 influencing_factors_stemCompl <- get_influencing_factors_stemCompl(influencing_factors_with_stemCompl)
 
@@ -994,13 +865,13 @@ include_factor <- function(new_factor_s) {
 
 cos_sim_calc_influencing_factors <- function(new_influencing_factors_stemCompl){
   # Definimos la función cos_sim_calc_influencing_factors(), que lleva a cabo el análisis
-  # semántico latente entre los términos del vector que recibe como argumento, y calcula
+  # semántico latente (LSA) entre los términos del vector que recibe como argumento, y calcula
   # la similitud del coseno entre pares de términos. 
   # Creamos la matriz de términos-documentos con el paquete pubmed.mineR, en particular, 
-  # con la función tdm_for_lsa(), la cual recibe los argumentos 'object' (objeto S4 de 
+  # con la función tdm_for_lsa(), la cual recibe los argumentos 'object' (objeto de 
   # clase 'Abstracts') e 'y' (vector de caracteres especificando los términos). Anteriormente
-  # creamos el objeto S4 de clase 'Abstracts', que denominamos 's4_Object'
-  my_tdm_pubmedmineR_influ_factors <- tdm_for_lsa(object = s4_Object, y = new_influencing_factors_stemCompl)
+  # creamos el objeto de clase 'Abstracts', que denominamos 'abstract_Object'
+  my_tdm_pubmedmineR_influ_factors <- tdm_for_lsa(object = abstract_Object, y = new_influencing_factors_stemCompl)
   # Para llevar a cabo el análisis semántico latente, usamos la función lsa() del paquete
   # lsa. Esta función recibe la matriz TermDocument y el número de valores singulares 
   # óptimo (generado por la función dimcalc_share()), y genera un nuevo espacio vectorial
@@ -1008,7 +879,7 @@ cos_sim_calc_influencing_factors <- function(new_influencing_factors_stemCompl){
   # número de palabras analizado.
   lsa_tdm_pubmedmineR_influ_factors <- lsa(my_tdm_pubmedmineR_influ_factors, dims = dimcalc_share())
   # Convertimos el espacio latente semántico en una nueva matriz de términos-documentos
-  # (TermDocument) con la función as.textmatrix().
+  # con la función as.textmatrix().
   latent_semantic <- as.textmatrix(lsa_tdm_pubmedmineR_influ_factors)
   # Con la función associate() del paquete lsa hallamos la similitud entre términos 
   # usando la similitud del coseno entre pares de términos. Elegimos como umbral ('threshold') 
@@ -1060,10 +931,9 @@ ggplot_assocs_influ_factor_selec <- function(influ_factor_selec, influ_factor_se
     theme_minimal()
 } 
 
-
-
-###### Para terminar, vamos a incluir en la aplicación web una herramienta para que el 
-# usuario pueda llevar a cabo un análisis de la evolución de la información a lo largo del tiempo. 
+###### Evolución de la información. Para terminar, vamos a incluir en la aplicación web
+# una herramienta para que el usuario pueda llevar a cabo un análisis de la evolución de
+# la información a lo largo del tiempo. 
 
 # Para ello, los términos siempre serán los mismos, 'mice', 'stress' y 'depression',
 # pero podrá seleccionar los periodos de fechas que desee.
@@ -1072,32 +942,15 @@ ggplot_assocs_influ_factor_selec <- function(influ_factor_selec, influ_factor_se
 # dos periodos de tiempo en los que esté interesado. A continuación, podrá seleccionar añadir
 # más periodos de tiempo o hacer el análisis solo con dos. 
 
-# Las querys serán del tipo
-# "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND aaaa/mm/dd:aaaa/mm/dd [DP]", 
-# por lo que la etiqueta '[DP]' ('publication date') tiene el formato aaaa/mm/dd, y para seleccionar periodos se
-# emplea ':'.
+# Las querys serán del tipo:
+# "mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND aaaa/mm/dd:aaaa/mm/dd [DP]".
 
-# Creamos un contador para llevar la cuenta de los 'date widgets' (creados en la interfaz del usuario, 
-# como veremos posteriormente, por la función dateRangeInput()). Para ello, definimos la variable 'dates_counter'.
-# Como mencionamos, aparecerán por defecto dos calendarios en la aplicación web. 
+# Creamos un contador para llevar la cuenta de los 'date widgets' (creados en la interfaz 
+# del usuario, como veremos posteriormente, por la función dateRangeInput()). Para ello,
+# definimos la variable 'dates_counter'. Como mencionamos, aparecerán por defecto dos
+# calendarios en la aplicación web. 
 
 dates_counter <- 2
-
-create_TermDocumentMatrix_from_corpus <- function(my_corpus_tm) {
-  # Definimos la función create_TermDocumentMatrix_from_corpus(), que, dado un Corpus 
-  # del paquete tm, aplica transformaciones y crea la matriz de términos-documentos. 
-  # Aplicamos las transformaciones 'removePunctuation', 'removeNumbers', 'stripWhitespace', 
-  # 'stemDocument' y 'removeWords' con la función tm_map() del paquete tm. 
-  new_corpus <- tm_map(my_corpus_tm, removePunctuation)
-  new_corpus <- tm_map(new_corpus, stripWhitespace)
-  new_corpus <- tm_map(new_corpus, removeNumbers)
-  new_corpus <- tm_map(new_corpus, stemDocument)
-  new_corpus <- tm_map(new_corpus, removeWords, stopwords("english"))
-  # Creamos la matriz TermDocument con la función TermDocumentMatrix() de este mismo paquete.  
-  my_tdm <- TermDocumentMatrix(new_corpus)
-  # Devolvemos la matriz TermDocument. 
-  return(my_tdm)
-}
 
 get_corpus_for_dates <- function(dates) {
   # Definimos la función get_corpus_for_dates(), que, dado un periodo de fechas (cadena 
@@ -1109,12 +962,9 @@ get_corpus_for_dates <- function(dates) {
   # los artículos en formato 'xml'.
   dates_for_file <- gsub(":", "_", gsub("/", "", dates))
   dest_file_prefix <- paste("easyPubMed_data_xml_", dates_for_file, sep = "")
-  download <- batch_pubmed_download(
-    pubmed_query_string = query,
-    dest_file_prefix = dest_file_prefix,
-    dest_dir = my_dir,
-    format = "xml"
-  )
+  download <- batch_pubmed_download(pubmed_query_string = query, 
+                                    dest_file_prefix = dest_file_prefix, 
+                                    dest_dir = my_dir, format = "xml")
   # Aplicamos la función separate_and_store_batch(), definida anteriormente, para separar y
   # guardar en archivos de texto separados, denominados con el PMID del artículo en cuestión,
   # el título y abstract (si existe) de cada documento.
@@ -1127,10 +977,26 @@ get_corpus_for_dates <- function(dates) {
   return(corpus)
 }
 
+create_TermDocumentMatrix_from_corpus <- function(my_corpus_tm) {
+  # Definimos la función create_TermDocumentMatrix_from_corpus(), que, dado un Corpus 
+  # del paquete tm, aplica transformaciones y crea la matriz de términos-documentos. 
+  # Aplicamos las transformaciones 'removePunctuation', 'stripWhitespace', 'removeNumbers',
+  # 'stemDocument' y 'removeWords' con la función tm_map() del paquete tm. 
+  new_corpus <- tm_map(my_corpus_tm, removePunctuation)
+  new_corpus <- tm_map(new_corpus, stripWhitespace)
+  new_corpus <- tm_map(new_corpus, removeNumbers)
+  new_corpus <- tm_map(new_corpus, stemDocument)
+  new_corpus <- tm_map(new_corpus, removeWords, stopwords("english"))
+  # Creamos la matriz TermDocument con la función TermDocumentMatrix() de este mismo paquete.  
+  my_tdm <- TermDocumentMatrix(new_corpus)
+  # Devolvemos la matriz TermDocument. 
+  return(my_tdm)
+}
+
 get_words_for_corpus <- function(corpus) {
   # Definimos la función get_words_for_corpus() que, dado un Corpus (del paquete tm), 
   # devuelve los 200 términos más frecuentes.
-  # Creamos la matriz de términos-documentos empleando la función 
+  # Creamos la matriz de términos-documentos empleando la función
   # create_TermDocumentMatrix_from_corpus() definida anteriormente.
   tdm <- create_TermDocumentMatrix_from_corpus(corpus)
   # Convertimos dicha matriz a dataframe. 
@@ -1215,9 +1081,7 @@ get_words_freqs_for_dates <- function(dates_inputs) {
     # Guardamos los términos del periodo actual. 
     words <- df_words$word
     # Aplicamos la función stemCompletion() del paquete tm.
-    words_with_stemComp <- stemCompletion(x = words,
-                                          dictionary = corpus,
-                                          type = "prevalent")
+    words_with_stemComp <- stemCompletion(x = words, dictionary = corpus, type = "prevalent")
     # Aplicamos la función get_influencing_factors_stemCompl() definida anteriormente
     # para crear un vector con las palabras completas tras aplicar la función stemCompletion().
     words_with_stemComp_clean <- get_influencing_factors_stemCompl(words_with_stemComp)
@@ -1228,9 +1092,10 @@ get_words_freqs_for_dates <- function(dates_inputs) {
   return(words_for_dates_without_common_words)
 }
 
-# Creamos una guía para cada pestaña de la aplicación utilizando la librería Cicerone.
+
+###### Creamos una guía para cada pestaña de la aplicación utilizando la librería Cicerone.
 # Para ello, debemos guardar cada guía en una variable distinta, que luego utilizaremos
-# en el server.
+# en el 'server'.
 # Cada guía es creada con la función new() y le añadimos los pasos de cada parte
 # que queremos describir de la página con la función step(). Esta última función
 # recibe como argumentos el 'id' del atributo de la página, el título del paso de
@@ -1290,7 +1155,7 @@ guide_clusters_group_info <- Cicerone$
   new()$
   step(
     "plot_dendrogram_exemplars",
-    "Dendrograma de los artículos ejemplares",
+    "Dendrograma",
     "Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por propagación de afinidad. Las distancias entre ellos corresponden con la medida del coseno."
   )
 
@@ -1359,19 +1224,20 @@ guide_information_evolution <- Cicerone$
   )
 
 
-###### POR AQUÍ.
-
-###### A continuación, definimos la interfaz de usuario (UI) y el servidor de la
+###### A continuación, definimos la interfaz de usuario (UI) y el servidor o 'server' de la
 # aplicación web.
 
 ###### Interfaz de usuario:
 
 ui <- fluidPage(
+  # Definimos el nombre de la aplicación que aparece en la pestaña del navegador con
+  # la función titlePanel(). 
+  titlePanel(title = "", windowTitle = "Estrés y depresión"),
   use_cicerone(),
   dashboardPage(
     skin = "black",
     # Utilizamos la función dashboardPage() del paquete shinydashboard para crear
-    # un 'dashboard' para usarlo en la aplicación de Shiny.
+    # un 'dashboard' para usarlo en la aplicación Shiny.
     
     # Creamos el encabezado del tablero con la función dashboardHeader().
     dashboardHeader(
@@ -1382,7 +1248,7 @@ ui <- fluidPage(
       # con la clase 'title-box'; dentro de este contenedor, se agrega un encabezado
       # con la función h1()).
       title = div(
-        # Contenedor flex para colocar la imagen y el texto uno al lado del otro.
+        # Contenedor 'flex' para colocar la imagen y el texto uno al lado del otro.
         style = "display: flex; align-items: center; vertical-align: middle;",
         # Imagen en el encabezado.
         img(
@@ -1397,7 +1263,7 @@ ui <- fluidPage(
           h1(
             class = "primary-title",
             style = "color: black;
-           font-size: 22px;",
+            font-size: 22px;",
             "ESTRÉS Y DEPRESIÓN"
           )
         )
@@ -1405,42 +1271,46 @@ ui <- fluidPage(
     ),
     
     # Creamos la barra lateral del tablero con la función dashboardSidebar(). Esta
-    # barra lateral contiene un menú, creado con sidebarMenu()). Agregamos 'menuItems'
+    # barra lateral contiene un menú, creado con sidebarMenu(). Agregamos 'menuItems'
     # a la barra lateral, con los nombres de pestaña apropiados ('tabNames').
     dashboardSidebar(
       # Ajustamos también el ancho de la barra lateral:
       width = 300,
       sidebarMenu(
-        # Podemos añadir negrita utilizando HTML(). También podemos añadir iconos con
-        # el argumento 'icon' y la función icon().
+        # Podemos añadir negrita o cursiva utilizando HTML(). También podemos añadir 
+        # iconos con el argumento 'icon' y la función icon().
         menuItem(
-          HTML("<b> Inicio</b>"),
+          HTML("<b>Inicio</b>"),
           tabName = "home",
           icon = icon("house")
         ),
         menuItem(
-          HTML("<b> Artículos</b>"),
+          HTML("<b>Artículos</b>"),
           tabName = "articles",
           icon = icon("book")
         ),
         menuItem(
-          HTML("<b><i> Clusters</i></b>"),
+          HTML("<b><i>Clusters</i></b>"),
           tabName = "clusters",
           icon = icon("users-viewfinder")
         ),
         menuItem(
-          HTML("<b> Factores influyentes</b>"),
+          HTML("<b>Factores influyentes</b>"),
           tabName = "assocs",
           icon = icon("code-compare")
         ),
         menuItem(
-          HTML("<b> Evolución de la información</b>"),
+          HTML("<b>Evolución de la información</b>"),
           tabName = "dashboard",
           icon = icon("dashboard")
+        ),
+        menuItem(
+          HTML("<b>Información</b>"),
+          tabName = "about",
+          icon = icon("circle-info")
         )
       )
     ),
-    
     
     # Creamos el cuerpo del tablero con la función dashboardBody(). Añadimos 'tabItems'
     # con los valores correspondientes de 'tabName' (los mismos que hemos usado en
@@ -1456,14 +1326,11 @@ ui <- fluidPage(
       tabItems(
         tabItem(
           tabName = "home",
-          # Utilizamos la función fluidPage() para crear una pantalla que
-          # se ajusta automáticamente a las dimensiones de la ventana del
-          # navegador del usuario.
+          # Utilizamos la función fluidPage() para crear una pantalla que se ajusta 
+          # automáticamente a las dimensiones de la ventana del navegador del usuario.
           fluidPage(
             # Creamos una barra de navegación o conjunto de pestañas con la función
-            # tabsetPanel(). Los conjuntos de pestañas son útiles para dividir la
-            # salida en múltiples secciones visibles de forma independiente
-            # (múltiples 'tabPanel()').
+            # tabsetPanel(). 
             tabsetPanel(
               id = "mainTabsHome",
               tabPanel(
@@ -1474,11 +1341,11 @@ ui <- fluidPage(
                   actionButton(inputId = "guide_home_graphs_button", label = "Guía")
                 ),
                 # Añadimos el wordcloud() con los términos más frecuentes del corpus primario.
-                # Utilizamos la función sliderInput() para crear un control
-                # deslizante en la interfaz de usuario, de forma que permita
-                # seleccionar un valor dentro de un rango específico.
+                # Utilizamos la función sliderInput() para crear un control deslizante en 
+                # la interfaz de usuario, de forma que permita seleccionar un valor dentro
+                # de un rango específico.
                 # El sliderInput() está encapsulado por un div() para poder referenciarlo
-                # en la guía guide_home_graphs.
+                # en la guía 'guide_home_graphs'.
                 div(
                   id = "num_words_wordcloud_slider",
                   sliderInput(
@@ -1502,7 +1369,7 @@ ui <- fluidPage(
                        HTML("<br><br><br><br>"),
                        # Añadimos una tabla (dataTableOutput()) con los autores y sus frecuencias.
                        # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-                       # en la guía guide_home_authors.
+                       # en la guía 'guide_home_authors'.
                        div(
                          id = "dataTable_freq_authors",
                          dataTableOutput("freq_authors"))
@@ -1516,7 +1383,7 @@ ui <- fluidPage(
                        HTML("<br><br><br><br>"),
                        # Añadimos una tabla (tableOutput()) con el número de artículos publicados cada año.
                        # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-                       # en la guía guide_home_published_year.
+                       # en la guía 'guide_home_published_year'.
                        div(
                          id = "dataTable_year_article_date",
                          dataTableOutput("year_article_date"))
@@ -1531,7 +1398,7 @@ ui <- fluidPage(
                        # Añadimos una tabla (dataTableOutput()) con el número de artículos publicados en
                        # las diferentes revistas.
                        # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-                       # en la guía guide_home_journals.
+                       # en la guía 'guide_home_journals'.
                        div(
                          id = "dataTable_journals",
                          dataTableOutput("journals"))
@@ -1539,7 +1406,6 @@ ui <- fluidPage(
             )
           )
         ),
-        
         
         tabItem(
           tabName = "articles",
@@ -1560,14 +1426,13 @@ ui <- fluidPage(
               placeholder = "amygdala fst"
             ),
             # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-            # en la guía guide_articles.
+            # en la guía 'guide_articles'.
             div(
               id = "dataTable_found_documents",
               dataTableOutput("found_documents")
             )
           )
         ), 
-        
         
         tabItem(
           tabName = "clusters",
@@ -1582,6 +1447,7 @@ ui <- fluidPage(
                   style = "float: right",
                   actionButton(inputId = "guide_clusters_group_info_button", label = "Guía")
                 ),
+                HTML("<br><br><br><br><br>"),
                 # Mostramos un dendrograma de los ejemplares.
                 plotOutput("plot_dendrogram_exemplars"),
               ),
@@ -1596,7 +1462,7 @@ ui <- fluidPage(
                 HTML("<br><br>"),
                 # Añadimos una tabla (dataTableOutput()) con los ejemplares y sus keywords.
                 # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-                # en la guía guide_clusters_affinity_group.
+                # en la guía 'guide_clusters_affinity_group'.
                 div(
                   id = "dataTable_exemplar_keywords_df",
                   dataTableOutput("exemplar_keywords_df")
@@ -1605,7 +1471,7 @@ ui <- fluidPage(
                 # elegir un elemento de una lista de valores (esta lista de valores corresponde
                 # con la lista de los ejemplares).
                 # El selectInput() está encapsulado por un div() para poder referenciarlo
-                # en la guía guide_clusters_affinity_group.
+                # en la guía 'guide_clusters_affinity_group'.
                 div(
                   id = "selectInput_exemplar_name",
                   selectInput(
@@ -1618,10 +1484,10 @@ ui <- fluidPage(
                 # Mostramos el gráfico del cluster seleccionado por el usuario.
                 plotOutput("exemplar_name_cluster_plot"),
                 # Mostramos una tabla con el ejemplar seleccionado y los documentos del cluster
-                # que representa. Esta tabla contiene los hiperenlaces a pubmed de todos los
+                # que representa. Esta tabla contiene los hiperenlaces a PubMed de todos los
                 # documentos.
                 # El dataTableOutput() está encapsulado por un div() para poder referenciarlo
-                # en la guía guide_clusters_affinity_group.
+                # en la guía 'guide_clusters_affinity_group'.
                 div(
                   id = "dataTable_table_for_exemplar_name",
                   dataTableOutput("table_for_exemplar_name")
@@ -1630,7 +1496,6 @@ ui <- fluidPage(
             )
           )
         ),
-        
         
         tabItem(
           tabName = "assocs",
@@ -1655,7 +1520,7 @@ ui <- fluidPage(
                   placeholder = "mice",
                   width = "35%"
                 ),
-                # Posteriormente, en el server, crearemos una lista de selección con selectInput() 
+                # Posteriormente, en el 'server', crearemos una lista de selección con selectInput() 
                 # para que el usuario pueda elegir un elemento de una lista de valores (esta lista 
                 # de valores contiene diferentes valores de los factores influyentes, a la que se 
                 # añade el valor especificado por el usuario en textInput()). Para ello, usamos
@@ -1667,7 +1532,6 @@ ui <- fluidPage(
             )
           )
         ),
-        
         
         tabItem(
           tabName = "dashboard",
@@ -1681,31 +1545,55 @@ ui <- fluidPage(
                          style = "float: right",
                          actionButton(inputId = "guide_information_evolution_button", label = "Guía")
                        ),
-                       # Creamos dos 'date widgets' para que el usuario pueda seleccionar los periodos de tiempo
-                       # que quiere comparar. Para ello, empleamos la función dateRangeInput(). 
-                       dateRangeInput(inputId = "dates_1", label = "Seleccione el primer periodo de tiempo:", 
-                                      start = '2000-01-01', end = '2023-12-31', startview = "decade", width = "50%"),
-                       dateRangeInput(inputId = "dates_2", label = "Seleccione el segundo periodo de tiempo:", 
-                                      start = '2000-01-01', end = '2023-12-31', startview = "decade", width = "50%"),
+                       # Creamos dos 'date widgets' para que el usuario pueda seleccionar 
+                       # los periodos de tiempo que quiere comparar. Para ello, empleamos
+                       # la función dateRangeInput(). 
+                       dateRangeInput(inputId = "dates_1",
+                                      label = "Seleccione el primer periodo de tiempo:", 
+                                      start = '2000-01-01', end = '2023-12-31', 
+                                      startview = "decade", width = "50%"),
+                       dateRangeInput(inputId = "dates_2", 
+                                      label = "Seleccione el segundo periodo de tiempo:", 
+                                      start = '2000-01-01', end = '2023-12-31', 
+                                      startview = "decade", width = "50%"),
                        # Añadimos un botón para que el usuario pueda añadir más periodos con la función
                        # actionButton().
                        actionButton(inputId = "add_dates", label = "Añadir más periodos"),
-                       # Posteriormente, en el server, definiremos que, si el usuario hace clic en el
+                       # Posteriormente, en el 'server', definiremos que, si el usuario hace clic en el
                        # botón 'Añadir más periodos' (ID 'add_dates'), se añadirá otro dateRangeInput().
                        # Para ello, usamos uiOutput(). 
                        uiOutput("dynamic_date_inputs"),
                        # Añadimos otro botón para que el usuario pueda eliminar periodos (solo se podrán
-                       # eliminar aquellos que han sido añadidos por el usuario, es decir, mínimo deben
+                       # eliminar aquellos que han sido añadidos por el usuario, es decir, mínimo debe
                        # haber 2 periodos).
                        actionButton(inputId = "remove_dates", label = "Eliminar último periodo"),
-                       # Añadimos un último botón para que el usuario pueda confirmar los periodos seleccionados. 
+                       # Añadimos un último botón para que el usuario pueda confirmar los periodos 
+                       # seleccionados. 
                        actionButton(inputId = "confirm_dates", label = "Confirmar"),
-                       #
+                       # Añadimos los wordclouds, uno para cada periodo de tiempo seleccionado
+                       # por el usuario. Para ello, utilizamos la función uiOutput(). 
                        uiOutput("wordclouds_for_dates")
               )
             )
           )
+        ),
+        
+        tabItem(
+          tabName = "about",
+          fluidPage(
+            h2("Licencia"),
+            p("Esta aplicación Shiny fue desarrollada por Virginia Carayol Gordillo 
+              como trabajo final en el área de bioinformática estadística y aprendizaje 
+              automático del máster de bioinformática y bioestadística de la Universidad 
+              Abierta de Cataluña (UOC). El código fuente está disponible gratuitamente 
+              bajo licencia MIT en",
+              HTML('<a href="https://github.com/VirginiaCarayol/TFM_UOC">GitHub</a>.'), 
+              style = "text-align: justify;"),
+            h2("Contacto"),
+            p("Para cualquier comentario o pregunta, por favor contacte a vircarayolgordillo@gmail.com.")
+          )
         )
+        
       )
     )
   )
@@ -1713,7 +1601,7 @@ ui <- fluidPage(
 
 
 
-###### Servidor (server):
+###### Servidor o 'server':
 
 server <- function(input, output, session) {
   ###### Inicializamos con la función init() todas las guías que hemos creado, para
@@ -1728,7 +1616,7 @@ server <- function(input, output, session) {
   guide_influencing_factors$init()
   guide_information_evolution$init()
   
-  # Con la función observeEvent() podemos iniciar cada guía cuando se haga clic
+  # Con la función observeEvent() podemos iniciar cada guía cuando el usuario haga clic
   # en su correspondiente botón.
   observeEvent(input$guide_home_graphs_button, {
     guide_home_graphs$start()
@@ -1762,10 +1650,9 @@ server <- function(input, output, session) {
     guide_information_evolution$start()
   })
   
-  
   ###### Generamos el wordcloud() con los términos más frecuentes del corpus primario.
   # En particular, usamos la función reactive() para utilizar el valor seleccionado por
-  # el usuario en el sliderInput. 
+  # el usuario en el 'sliderInput'. 
   plot_wordcloud <- reactive({
     num_words <- input$num_words_wordcloud
     # Usamos la función wordcloud() para representar la nube de palabras de nuestro corpus. 
@@ -1778,7 +1665,7 @@ server <- function(input, output, session) {
     # representadas con una rotación de 90 grados) y 'colors' (colores para representar las
     # palabras de menor a mayor frecuencia).
     # Se configuran los márgenes para el gráfico, asegurando que el wordcloud se muestre
-    # sin márgenes. 
+    # sin márgenes, con la función par().
     par(mar = rep(0,4)) 
     wordcloud(words = df_words$word, freq = df_words$freq, min.freq = 1, max.words = num_words,
               random.order = FALSE, random.color = FALSE, rot.per = 0.5,
@@ -1789,12 +1676,10 @@ server <- function(input, output, session) {
     plot_wordcloud()
   }, bg = "transparent")
   
-  
   ###### Generamos el dendrograma con los términos más frecuentes del corpus primario. 
   output$plot_dendrogram <- renderPlot({
     plot(hclust_cosine_dist_terms_100, cex = 1)
   }, bg = "transparent")
-  
   
   ###### Filtramos los artículos por los términos introducidos por el usuario.
   output$found_documents <- renderDataTable({
@@ -1802,13 +1687,11 @@ server <- function(input, output, session) {
     get_document_titles(document_file_names, pmid_title_map)
   }, escape = FALSE)
   
-  
   ###### Mostramos los autores del corpus primario.
   output$freq_authors <- renderDataTable({
     author_df
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
-  
   
   ###### Mostramos el año de publicación de los artículos del corpus primario.
   output$year_article_date <- renderDataTable({
@@ -1816,13 +1699,11 @@ server <- function(input, output, session) {
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
   
-  
   ###### Mostramos las revistas donde se han publicado los artículos del corpus primario.
   output$journals <- renderDataTable({
     journals_df
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
-  
   
   ###### Mostramos una tabla con los ejemplares hallados tras el agrupamiento y sus
   # palabras clave (keywords).
@@ -1830,25 +1711,21 @@ server <- function(input, output, session) {
     exemplar_keywords_df
   }, options = list(pageLength = 15))
   
-  
   ###### Mostramos la gráfica del cluster del ejemplar seleccionado por el usuario. 
   output$exemplar_name_cluster_plot <- renderPlot({
     plot_for_exemplar_name(input$exemplar_name)
   }, bg = "transparent")
   
-  
   ###### Mostramos la tabla del cluster del ejemplar seleccionado por el usuario. Esta
-  # tabla contiene los hiperenlaces a pubmed de los documentos. 
+  # tabla contiene los hiperenlaces a PubMed de los documentos. 
   output$table_for_exemplar_name <- renderDataTable({
     table_for_exemplar_name(input$exemplar_name)}, options = list(dom = 't'), escape = FALSE
   )
-  
   
   ###### Mostramos un dendrograma de los ejemplares.
   output$plot_dendrogram_exemplars <- renderPlot({
     plot(hclust_cosine_dist_exemplars, cex = 1)
   }, bg = "transparent")
-  
   
   ###### Mostramos el gráfico de las asociaciones del factor influyente elegido por el
   # usuario. 
@@ -1876,7 +1753,6 @@ server <- function(input, output, session) {
     ggplot_assocs_influ_factor_selec(input$influencing_factors, influ_factor_selec_df)
   }, bg = "transparent")
   
-
   ###### Mostramos un dateRangeInput() más cada vez que el usuario haga clic en el 
   # botón con ID 'add_dates'.
   
@@ -1907,21 +1783,19 @@ server <- function(input, output, session) {
     insertUI(selector = "#dynamic_date_inputs", ui = new_date_input)
   })
   
-  
   ###### Eliminamos un dateRangeInput() cada vez que el usuario haga clic en el 
   # botón con ID 'remove_dates'.
   
   # Empleamos de nuevo la función observeEvent() para definir qué sucede cuando el usuario
   # hace clic sobre el botón con ID 'remove_dates'. Para eliminar un 'date widget', utilizamos
-  # la función removeUI() (se eliminará el último usando el contador 'dates_counter'). Actualizamos
-  # el contador tras eliminar uno. 
+  # la función removeUI() (se eliminará el último usando el contador 'dates_counter'). 
+  # Actualizamos el contador tras eliminar uno. 
   observeEvent(input$remove_dates, {
     if (dates_counter > 2) {
       removeUI(selector = paste("#dates_", dates_counter, sep = ""))
       dates_counter <<- dates_counter - 1
     }
   })
-  
   
   ###### Obtenemos los valores de inicio y fin de los diferentes dataRangeInput() 
   # seleccionados por el usuario cuando este haga clic en el botón con ID 'confirm_dates'. 
@@ -2014,17 +1888,15 @@ server <- function(input, output, session) {
         })
       }
       
-      # Aumentamos la barra de progreso. 
+      # Finalizamos la barra de progreso. 
       incProgress(1)
     })
   })
-
-  
 }
 
 
-###### Ejecutamos la aplicación con la función shinyApp(), que recibe la interfaz de 
-# usuario y el servidor. 
+###### Para terminar, ejecutamos la aplicación con la función shinyApp(), que recibe 
+# la interfaz de usuario y el servidor. 
 
 shinyApp(ui = ui, server = server)
 

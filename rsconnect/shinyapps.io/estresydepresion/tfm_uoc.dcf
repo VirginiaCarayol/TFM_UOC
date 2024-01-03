@@ -1,0 +1,10 @@
+name: tfm_uoc
+title:
+username: estresydepresion
+account: estresydepresion
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10860005
+bundleId: 8104799
+url: https://estresydepresion.shinyapps.io/tfm_uoc/
+version: 1
