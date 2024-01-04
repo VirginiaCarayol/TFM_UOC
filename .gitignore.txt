@@ -1,4 +1,8 @@
-# Ignoramos los directorios 'data' (que contiene los artículos descargados y no nos interesa subirlos a github) y 'rsconnect' (ya que es buena práctica ignorarlo), así como el archivo de texto 'newabs.txt' (se genera durante el código y tampoco estamos interesados en subirlo a github).
+# Optamos por omitir la subida a GitHub de los artículos descargados al ejecutar la aplicación en local, los cuales se encuentran en el directorio 'data'. 
+
+# Por otro lado, en cuanto al directorio 'rsconnect',  este se asocia con la implementación de aplicaciones Shiny en RStudio Connect, un servicio para compartir aplicaciones R. Este directorio se genera al desplegar la aplicación en RStudio Connect y contiene configuraciones específicas del entorno de implementación, y se recomienda ignorarlo.
+
+# Por último, ignoramos el archivo de texto 'newabs.txt', el cual se genera a partir del uso de la función readabs() del paquete pubmed.mineR al ejecutar la aplicación en local. 
 
 data/
 rsconnect/
