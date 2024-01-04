@@ -1,3 +1,5 @@
+# Archivo para ignorar dos directorios y un archivo de texto.
+
 # Optamos por omitir la subida a GitHub de los artículos descargados al ejecutar la aplicación en local, los cuales se encuentran en el directorio 'data'. 
 
 # Por otro lado, en cuanto al directorio 'rsconnect',  este se asocia con la implementación de aplicaciones Shiny en RStudio Connect, un servicio para compartir aplicaciones R. Este directorio se genera al desplegar la aplicación en RStudio Connect y contiene configuraciones específicas del entorno de implementación, y se recomienda ignorarlo.
