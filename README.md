@@ -59,7 +59,7 @@ Encontramos 6 pestañas en el menú lateral principal: 'Inicio', 'Artículos', '
 	- Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por propagación de afinidad. Las distancias entre ellos corresponden con la medida del coseno. 
 	- 'Agrupación por propagación de afinidad'.
 		- Tabla de los artículos ejemplares y sus palabras clave: puede ver las palabras clave asociadas a cada ejemplar y buscar ejemplares por palabras clave. Cuando un ejemplar no está asociado a ninguna palabra clave, aparece "No data available".
-    		- Desplegable con los ejemplares: puede seleccionar el ejemplar para analizar el cluster que representa. Se representará su gráfica y una tabla con los PMIDs de los artículos.
+		- Desplegable con los ejemplares: puede seleccionar el ejemplar para analizar el cluster que representa. Se representará su gráfica y una tabla con los PMIDs de los artículos.
 		- Gráfica del ejemplar seleccionado: se representan los artículos del cluster del ejemplar seleccionado con sus PMIDs. Las distancias entre ellos corresponden con la medida del coseno. 
 		- Tabla del ejemplar seleccionado: puede ver los PMIDs de los artículos del cluster del ejemplar seleccionado. Puede acceder al artículo en PubMed haciendo clic sobre su PMID.
 - 'Factores influyentes'.
