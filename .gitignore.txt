@@ -1,5 +1,0 @@
-# Ignoramos los directorios 'data' (que contiene los artículos descargados y no nos interesa subirlos a github) y 'rsconnect' (ya que es buena práctica ignorarlo), así como el archivo de texto 'newabs.txt' (se genera durante el código y tampoco estamos interesados en subirlo a github).
-
-data/
-rsconnect/
-newabs.txt
