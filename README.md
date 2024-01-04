@@ -44,7 +44,7 @@ Encontramos 6 pestañas en el menú lateral principal: 'Inicio', 'Artículos', '
 - 'Inicio'. A su vez, encontramos las pestañas 'Gráficos', 'Autores', 	'Año de publicación' y 'Revistas'. 
 	- 'Gráficos'. 
 		- Wordcloud: puede seleccionar la cantidad de palabras del corpus primario para mostrar en el wordcloud. 
-		- Dendrograma: dendrograma de las 100 palabras más frecuentes del corpus primario. 
+		- Dendrograma de las 100 palabras más frecuentes del corpus primario. 
 	- 'Autores'. 
 		- Tabla de los autores del corpus primario ordenados por su frecuencia de aparición. Puede buscar por nombre de autor. 
 	- 'Año de publicación'.
