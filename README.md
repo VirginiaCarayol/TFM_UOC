@@ -35,7 +35,7 @@ En este proyecto se utilizó un entorno de desarrollo basado en R, versión 4.3.
 	- ggplot2
 	- cicerone
 
-Para instalar dichos paquetes usamos ```install.packages(c("shiny", "shinydashboard", "easyPubMed", "RISmed", "tm", "pubmed.mineR", "apcluster", "lsa", "XML", "wordcloud", "RColorBrewer", "proxy", "hash", "stringr", "slam", "ggplot2", "cicerone"))´´´.
+Para instalar dichos paquetes usamos ```install.packages(c("shiny", "shinydashboard", "easyPubMed", "RISmed", "tm", "pubmed.mineR", "apcluster", "lsa", "XML", "wordcloud", "RColorBrewer", "proxy", "hash", "stringr", "slam", "ggplot2", "cicerone"))```.
 
 ## Estructura de la aplicación
 
