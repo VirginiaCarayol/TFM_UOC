@@ -1,13 +1,10 @@
-## Repositorio 'TFM_UOC' (https://github.com/VirginiaCarayol/TFM_UOC)
+## Repositorio 'TFM_UOC'
 
 En este repositorio encontramos:
 
 	- El script desarrollado para generar el análisis y la aplicación web, denominado 'app.R'. 
-
 	- El directorio 'www', que contiene la imagen del logo de la aplicación web.
-
 	- El archivo de texto '.gitignore.txt' para ignorar la subida a GitHub de dos directorios y un archivo de texto que se generan al ejecutar la 	aplicación web en local e implementar la aplicación Shiny en RStudio Connect. 
-
 	- La licencia MIT. 
 
 ## Proyecto y descripción
