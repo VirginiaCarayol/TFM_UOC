@@ -2,9 +2,9 @@
 
 En este repositorio encontramos:
 
-- El script desarrollado para generar el análisis y la aplicación web, denominado 'app.R'. 
-- El directorio 'www', que contiene la imagen del logo de la aplicación web.
-- El archivo de texto '.gitignore.txt' para ignorar la subida a GitHub de dos directorios y un archivo de texto que se generan al ejecutar la aplicación web en local e implementar la aplicación Shiny en RStudio Connect. 
+- El script desarrollado para generar el análisis y la aplicación web, denominado ```app.R```. 
+- El directorio ```www```, que contiene la imagen del logo de la aplicación web.
+- El archivo de texto ```.gitignore.txt``` para ignorar la subida a GitHub de dos directorios y un archivo de texto que se generan al ejecutar la aplicación web en local e implementar la aplicación Shiny en RStudio Connect. 
 - La licencia MIT. 
 
 ## Proyecto y descripción
@@ -15,7 +15,7 @@ Este proyecto se enfoca en la aplicación de técnicas de minería de textos par
 
 ## Requerimientos e instalación
 
-En este proyecto se utilizó un entorno de desarrollo basado en R, versión 4.3.1. Los paquetes de R utilizados en el análisis y la aplicación web (script 'app.R') son:
+En este proyecto se utilizó un entorno de desarrollo basado en R, versión 4.3.1. Los paquetes de R utilizados en el análisis y la aplicación web (script ```app.R```) son:
 
 	- shiny
 	- shinydashboard
@@ -71,4 +71,4 @@ Encontramos 6 pestañas en el menú lateral principal: 'Inicio', 'Artículos', '
 	- Añadir más periodos: puede añadir más periodos de tiempo haciendo clic sobre este botón.
 	- Eliminar último periodo: puede eliminar el último periodo de tiempo haciendo clic sobre este botón.
 	- Confirmar: una vez seleccionado, se llevará a cabo el análisis con los periodos presentes. Se mostrará un wordcloud por periodo de tiempo, donde se han eliminado las palabras comunes entre periodos.
-- 'Información'. Se muestra información sobre la licencia y el 	contacto. 
+- 'Información'. Se muestra información sobre la licencia y el contacto. 
