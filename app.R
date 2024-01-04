@@ -7,8 +7,6 @@
 
 library(shiny)
 library(shinydashboard)
-library(shinythemes)
-library(shinyjs)
 library(easyPubMed)
 library(RISmed)
 library(tm)
@@ -22,7 +20,6 @@ library(proxy)
 library(hash)
 library(stringr)
 library(slam)
-library(DT)
 library(ggplot2)
 library(cicerone)
 
@@ -1735,7 +1732,6 @@ server <- function(input, output, session) {
   # de valores contiene diferentes valores de los factores influyentes, y se actualiza
   # con el valor recibido en textInput(), es decir, se añade a la lista el valor 
   # especificado por el usuario. 
-  
   output$influencing_factors <- renderUI({
     selectInput(
       inputId = "influencing_factors",
