@@ -135,7 +135,7 @@ separate_and_store_batch(my_abstracts_download_xml, xmls_folder)
 # 'Corpus', que representa una colección de documentos de texto. Para crear objetos 
 # de clase 'Corpus', podemos emplear la función Corpus() pasándole como argumento 'x'
 # un 'DirSource'. Éste recibe, entre otros, los siguientes argumentos: 'directory'
-# (directorio donde se encuentran nuestros documentos .txt, uno para cada abstract)
+# (directorio donde se encuentran nuestros documentos TXT, uno para cada abstract)
 # y 'pattern' (una expresión regular opcional; sólo se devolverán los nombres de
 # los archivos que coincidan con la expresión regular). 
 
@@ -147,7 +147,7 @@ my_corpus_tm_raw <- Corpus(x = DirSource(paste(my_dir, xmls_folder, sep = "/"),
 # tm. 
 
 # Eliminamos las puntuaciones, los espacios en blanco adicionales y los números, y
-# sacamos las derivaciones de las palabras.
+# sacamos las derivaciones de las palabras o términos.
 
 my_corpus_tm <- tm_map(my_corpus_tm_raw, removePunctuation)
 my_corpus_tm <- tm_map(my_corpus_tm, stripWhitespace)
@@ -172,7 +172,7 @@ my_tdm <- TermDocumentMatrix(my_corpus_tm)
 
 ###### Nube de palabras o wordcloud. 
 
-# Comenzamos representando con una nube de palabras aquellos términos más frecuentes
+# Comenzamos representando con una nube de palabras aquellos términos o palabras más frecuentes
 # entre todos los documentos. Para ello, empleamos el paquete wordcloud, así como 
 # RColorBrewer para los colores. 
 
@@ -280,12 +280,6 @@ author_df <- data.frame(Author = names(author_counts), Frequency = as.numeric(au
 
 author_df <- author_df[order(author_df$Frequency, decreasing = TRUE),]
 
-# Eliminamos los nombres de las filas para que, al ordenar el dataframe por alguna de
-# sus columnas, el nombre de la fila se vuelva a generar y así se represente de manera
-# más ordenada en la aplicación web.
-
-rownames(author_df) <- NULL
-
 # Incluimos en el 'server' la información sobre los autores ordenados de manera decreciente
 # por el número de publicaciones que poseen sobre el tema en cuestión.
 
@@ -385,8 +379,6 @@ colnames(journals_df) <- c("Journal", "Frequency")
 # función order(). 
 
 journals_df <- journals_df[order(-journals_df$Frequency),]
-
-rownames(journals_df) <- NULL
 
 ###### Artículos: lista de los artículos disponibles que cumplen con los valores 
 # especificados por el usuario para los factores influyentes. 
@@ -541,7 +533,7 @@ get_document_titles <- function(document_file_names, pmid_title_map) {
     # Añadimos una fila nueva en el dataframe con el PMID y el título del artículo.
     pmid_titles[nrow(pmid_titles) + 1,] <- c(link_pmid, title)
   }
-  # Devolvemos el dataframe con los PMID (y sus hiperenlaces a pubmed) y títulos de 
+  # Devolvemos el dataframe con los PMID (y sus hiperenlaces a PubMed) y títulos de 
   # los artículos.
   return(pmid_titles)
 }
@@ -756,7 +748,7 @@ table_for_exemplar_name <- function(exemplar_name){
   # Añadimos a dicho dataframe el nombre (PMID) del ejemplar seleccionado y los documentos de su
   # cluster. 
   exemplar_cluster_df[nrow(exemplar_cluster_df) + 1,] <- c(exemplar_name, documents_hyperlinks)
-  # Devolvemos dicho dataframe con los hiperenlaces a pubmed. 
+  # Devolvemos dicho dataframe con los hiperenlaces a PubMed. 
   return(exemplar_cluster_df)
 }
 
@@ -1578,6 +1570,21 @@ ui <- fluidPage(
         tabItem(
           tabName = "about",
           fluidPage(
+            h2("Cadenas de búsqueda en PubMed"),
+            p("A excepción del análisis de la evolución de la información, se utilizan
+              los descriptores \"mice\", \"stress\", \"depression\", \"behavior\" y 
+              \"test\" con la opción de búsqueda en el título y el resumen 
+              (\"Title/Abstract\"). De esta forma, la cadena de búsqueda en PubMed 
+              corresponde con 
+              \"mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract]\".",
+              style = "text-align: justify;"),
+            p(""),
+            p("En el caso del análisis de la evolución de la información, se emplean 
+              los términos de búsqueda \"mice\", \"stress\" y \"depression\",
+              de modo que las cadenas de búsqueda en PubMed son del tipo 
+              \"mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND aaaa/mm/dd:aaaa/mm/dd [DP]\", 
+              con los periodos de fechas seleccionados por el usuario.", 
+              style = "text-align: justify;"),
             h2("Licencia"),
             p("Esta aplicación Shiny fue desarrollada por Virginia Carayol Gordillo 
               como trabajo final en el área de bioinformática estadística y aprendizaje 
@@ -1686,19 +1693,19 @@ server <- function(input, output, session) {
   
   ###### Mostramos los autores del corpus primario.
   output$freq_authors <- renderDataTable({
-    author_df
+    author_df[,1:2]
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
   
   ###### Mostramos el año de publicación de los artículos del corpus primario.
   output$year_article_date <- renderDataTable({
-    year_article_date
+    year_article_date[,1:2]
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
   
   ###### Mostramos las revistas donde se han publicado los artículos del corpus primario.
   output$journals <- renderDataTable({
-    journals_df
+    journals_df[,1:2]
   }, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center',
                                                             targets = "_all"))))
   
