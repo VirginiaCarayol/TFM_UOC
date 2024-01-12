@@ -547,7 +547,7 @@ get_document_titles <- function(document_file_names, pmid_title_map) {
 # que muestren qué documentos se agrupan por propagación de afinidad y cuántos grupos 
 # o clusters se forman a partir del corpus primario. 
 
-# Utilizaremos el paquete slam de R para calcular la medida del coseno entre los documentos
+# Utilizaremos el paquete slam de R para calcular la similitud del coseno entre los documentos
 # del corpus primario, y posteriormente aplicaremos la función apcluster() del paquete
 # apcluster a esta matriz de similitud. 
 
@@ -1124,7 +1124,8 @@ guide_home_journals <- Cicerone$
   step(
     "dataTable_journals",
     "Tabla de las revistas",
-    "Tabla de la cantidad de artículos del corpus primario publicados en cada revista. Puede buscar por revista."
+    "Tabla de la cantidad de artículos del corpus primario publicados en cada revista. 
+    Puede buscar por revista."
   )
 
 guide_articles <- Cicerone$
@@ -1132,12 +1133,16 @@ guide_articles <- Cicerone$
   step(
     "search_string",
     "Búsqueda por palabras",
-    "Puede filtrar los artículos del corpus primario que contengan las palabras introducidas. Estos artículos contendrán todas las palabras. Debe introducir estas palabras separadas por un espacio."
+    "Puede filtrar los artículos del corpus primario según las palabras introducidas 
+    (sólo se mostrarán aquellos que contengan todas las palabras ingresadas). Debe 
+    introducir estas palabras separadas por un espacio."
   )$
   step(
     "dataTable_found_documents",
     "Tabla de los artículos filtrados",
-    "Se muestra el PMID y los títulos de los artículos. Puede acceder al artículo en PubMed haciendo clic sobre su PMID. Adicionalmente, puede buscar entre estos artículos por palabras presentes en sus títulos."
+    "Se muestra el PMID y los títulos de los artículos. Puede acceder al artículo en 
+    PubMed haciendo clic sobre su PMID. Adicionalmente, puede buscar entre estos artículos 
+    por palabras presentes en sus títulos."
   )
 
 guide_clusters_group_info <- Cicerone$
@@ -1145,7 +1150,8 @@ guide_clusters_group_info <- Cicerone$
   step(
     "plot_dendrogram_exemplars",
     "Dendrograma",
-    "Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por propagación de afinidad. Las distancias entre ellos corresponden con la medida del coseno."
+    "Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por 
+    propagación de afinidad. Las distancias entre ellos corresponden con la similitud del coseno."
   )
 
 guide_clusters_affinity_groups <- Cicerone$
@@ -1153,22 +1159,26 @@ guide_clusters_affinity_groups <- Cicerone$
   step(
     "dataTable_exemplar_keywords_df",
     "Tabla de los artículos ejemplares y sus palabras clave",
-    "Puede ver las palabras clave asociadas a cada ejemplar y buscar ejemplares por palabras clave. Cuando un ejemplar no está asociado a ninguna palabra clave, aparece \"No data available\"."
+    "Puede ver las palabras clave asociadas a cada ejemplar y buscar ejemplares por 
+    palabras clave. Cuando un ejemplar no está asociado a ninguna palabra clave, aparece \"No data available\"."
   )$
   step(
     "selectInput_exemplar_name",
     "Desplegable con los ejemplares",
-    "Puede seleccionar el ejemplar para analizar el cluster que representa. Se representará su gráfica y una tabla con los PMIDs de los artículos."
+    "Puede seleccionar el ejemplar para analizar el cluster que representa. Se representará
+    su gráfica y una tabla con los PMIDs de los artículos."
   )$
   step(
     "exemplar_name_cluster_plot",
     "Gráfica del ejemplar seleccionado",
-    "Se representan los artículos del cluster del ejemplar seleccionado con sus PMIDs. Las distancias entre ellos corresponden con la medida del coseno."
+    "Se representan los artículos del cluster del ejemplar seleccionado con sus PMIDs. 
+    Las distancias entre ellos corresponden con la similitud del coseno."
   )$
   step(
     "dataTable_table_for_exemplar_name",
     "Tabla del ejemplar seleccionado",
-    "Puede ver los PMIDs de los artículos del cluster del ejemplar seleccionado. Puede acceder al artículo en PubMed haciendo clic sobre su PMID."
+    "Puede ver los PMIDs de los artículos del cluster del ejemplar seleccionado. 
+    Puede acceder al artículo en PubMed haciendo clic sobre su PMID."
   )
 
 guide_influencing_factors <- Cicerone$
@@ -1176,17 +1186,22 @@ guide_influencing_factors <- Cicerone$
   step(
     "new_factor_s",
     "Términos a introducir en el análisis de asociación",
-    "Puede introducir uno o más términos a la lista inicial. Si introduce más de un término, estos deben ir separados por un espacio. Posteriormente, podrá seleccionar uno de estos términos para analizar su asociación con el resto de términos de la lista."
+    "Puede introducir uno o más términos a la lista inicial mostrada a continuación 
+    en el desplegable. Si introduce más de un término, estos deben ir separados por 
+    un espacio. Posteriormente, podrá seleccionar uno de estos términos para analizar
+    su asociación con el resto de términos de la lista."
   )$
   step(
     "influencing_factors",
     "Lista de términos",
-    "Puede seleccionar un término de la lista para analizar su asociación con el resto de términos listados. En esta lista aparecerán también los términos que haya introducido."
+    "Puede seleccionar un término de la lista para analizar su asociación con el resto
+    de términos listados. En esta lista aparecerán también los términos que haya introducido."
   )$
   step(
     "influencing_factor_assocs_plot",
     "Histograma de asociación",
-    "Histograma de la fuerza de asociación utilizando la función de similitud del coseno y el análisis semántico latente (LSA) del término seleccionado con el resto de términos listados."
+    "Histograma de la fuerza de asociación utilizando la función de similitud del coseno
+    y el análisis semántico latente (LSA) del término seleccionado con el resto de términos listados."
   )
 
 guide_information_evolution <- Cicerone$
@@ -1194,7 +1209,8 @@ guide_information_evolution <- Cicerone$
   step(
     "dates_1",
     "Periodo de tiempo",
-    "Puede seleccionar un periodo de tiempo para llevar a cabo el análisis de la evolución de la información. Se compararán cada uno de los periodos de tiempo seleccionados."
+    "Puede seleccionar un periodo de tiempo para llevar a cabo el análisis de la evolución
+    de la información. Se compararán cada uno de los periodos de tiempo seleccionados."
   )$
   step(
     "add_dates",
@@ -1209,7 +1225,8 @@ guide_information_evolution <- Cicerone$
   step(
     "confirm_dates",
     "Confirmar",
-    "Una vez seleccionado, se llevará a cabo el análisis con los periodos presentes. Se mostrará un wordcloud por periodo de tiempo, donde se han eliminado las palabras comunes entre periodos."
+    "Una vez seleccionado, se llevará a cabo el análisis con los periodos presentes. 
+    Se mostrará un wordcloud por periodo de tiempo, donde se han eliminado las palabras comunes entre periodos."
   )
 
 
@@ -1329,6 +1346,14 @@ ui <- fluidPage(
                   style = "float: right",
                   actionButton(inputId = "guide_home_graphs_button", label = "Guía")
                 ),
+                # Añadimos información del corpus primario. 
+                HTML("<br><br>"),
+                p("A excepción del análisis de la evolución de la información, se utilizan
+                  los descriptores \"mice\", \"stress\", \"depression\", \"behavior\" y \"test\", 
+                  con la opción de búsqueda en el título y el resumen. 
+                  De esta manera, se crea la cadena de búsqueda en PubMed, dando lugar al corpus
+                  primario (colección de artículos que analizamos en esta aplicación web).", 
+                  style = "text-align: justify;"),
                 # Añadimos el wordcloud() con los términos más frecuentes del corpus primario.
                 # Utilizamos la función sliderInput() para crear un control deslizante en 
                 # la interfaz de usuario, de forma que permita seleccionar un valor dentro
@@ -1534,6 +1559,17 @@ ui <- fluidPage(
                          style = "float: right",
                          actionButton(inputId = "guide_information_evolution_button", label = "Guía")
                        ),
+                       # Añadimos información de los corpus primario y secundarios.
+                       HTML("<br><br>"),
+                       p("Se emplean los términos de búsqueda \"mice\", \"stress\" y \"depression\", 
+                         con la opción de búsqueda en el título y el resumen, 
+                         así como los periodos de fechas seleccionados por el usuario.
+                         De esta manera, se crean las cadenas de búsqueda en PubMed (una para cada 
+                         periodo seleccionado), dando lugar a los diferentes corpus secundarios
+                         (el corpus primario corresponde con el conjunto de artículos empleando
+                         los términos mencionados sin seleccionar fechas; cada corpus secundario
+                         es un subconjunto de dicho corpus primario).", 
+                         style = "text-align: justify;"),
                        # Creamos dos 'date widgets' para que el usuario pueda seleccionar 
                        # los periodos de tiempo que quiere comparar. Para ello, empleamos
                        # la función dateRangeInput(). 
@@ -1573,17 +1609,21 @@ ui <- fluidPage(
             h2("Cadenas de búsqueda en PubMed"),
             p("A excepción del análisis de la evolución de la información, se utilizan
               los descriptores \"mice\", \"stress\", \"depression\", \"behavior\" y 
-              \"test\" con la opción de búsqueda en el título y el resumen 
-              (\"Title/Abstract\"). De esta forma, la cadena de búsqueda en PubMed 
-              corresponde con 
-              \"mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract]\".",
+              \"test\", con la opción de búsqueda en el título y el resumen. De esta 
+              forma, la cadena de búsqueda en PubMed corresponde con 
+              \"mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND behavior[Title/Abstract] AND test[Title/Abstract]\".
+              Con esta cadena de búsqueda obtenemos el corpus primario, es decir, la 
+              colección de artículos que analizamos en esta aplicación web.",
               style = "text-align: justify;"),
-            p(""),
             p("En el caso del análisis de la evolución de la información, se emplean 
               los términos de búsqueda \"mice\", \"stress\" y \"depression\",
               de modo que las cadenas de búsqueda en PubMed son del tipo 
               \"mice[Title/Abstract] AND stress[Title/Abstract] AND depression[Title/Abstract] AND aaaa/mm/dd:aaaa/mm/dd [DP]\", 
-              con los periodos de fechas seleccionados por el usuario.", 
+              con los periodos de fechas seleccionados por el usuario.
+              Por tanto, tenemos una cadena de búsqueda en PubMed para cada periodo seleccionado,
+              dando lugar a los diferentes corpus secundarios (el corpus primario corresponde
+              con el conjunto de artículos empleando los términos mencionados sin seleccionar
+              fechas; cada corpus secundario es un subconjunto de dicho corpus primario).", 
               style = "text-align: justify;"),
             h2("Licencia"),
             p("Esta aplicación Shiny fue desarrollada por Virginia Carayol Gordillo 
@@ -1874,7 +1914,7 @@ server <- function(input, output, session) {
           # Se establece un renderPlot para cada wordcloud, asociado con el ID único. 
           output[[id]] <- renderPlot({
             # Se configuran los márgenes para el gráfico, asegurando que el wordcloud
-            # se muestre sin márgenes. 
+            # se muestre completo. 
             par(mar = rep(0, 4))
             # Se generan los wordclouds utilizando los datos de palabras y frecuencias del
             # periodo de tiempo correspondiente. 
