@@ -39,7 +39,7 @@ Para instalar dichos paquetes usamos ```install.packages(c("shiny", "shinydashbo
 
 Encontramos 6 pestañas en el menú lateral principal: 'Inicio', 'Artículos', 'Clusters', 'Factores influyentes', 'Evolución de la información' e 'Información'. En cada pestaña encontramos una guía.
 
-- 'Inicio'. A su vez, encontramos las pestañas 'Gráficos', 'Autores', 	'Año de publicación' y 'Revistas'. 
+- 'Inicio'. A su vez, encontramos las pestañas 'Gráficos', 'Autores', 'Año de publicación' y 'Revistas'. 
 	- 'Gráficos'. 
 		- Wordcloud: puede seleccionar la cantidad de palabras del corpus primario para mostrar en el wordcloud. 
 		- Dendrograma de las 100 palabras más frecuentes del corpus primario. 
@@ -50,15 +50,15 @@ Encontramos 6 pestañas en el menú lateral principal: 'Inicio', 'Artículos', '
 	- 'Revistas'.
 		- Tabla de la cantidad de artículos del corpus primario publicados en cada revista. Puede buscar por revista. 
 - 'Artículos'.
-	- Búsqueda por palabras: puede filtrar los artículos del corpus primario que contengan las palabras introducidas. Estos artículos contendrán todas las palabras. Debe introducir estas palabras separadas por un espacio. 
+	- Búsqueda por palabras: puede filtrar los artículos del corpus primario según las palabras introducidas (sólo se mostrarán aquellos que contengan todas las palabras ingresadas). Debe introducir estas palabras separadas por un espacio. 
 	- Tabla de los artículos filtrados: se muestra el PMID y los títulos de los artículos. Puede acceder al artículo en PubMed haciendo clic sobre su PMID. Adicionalmente, puede buscar entre estos artículos por palabras presentes en sus títulos.
 - 'Clusters'. A su vez, encontramos las pestañas 'Información general sobre los clusters' y 'Agrupación por propagación de afinidad'.
 	- Información general sobre los clusters'.
-	- Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por propagación de afinidad. Las distancias entre ellos corresponden con la medida del coseno. 
+	- Dendrograma de los artículos ejemplares tras llevar a cabo la agrupación por propagación de afinidad. Las distancias entre ellos corresponden con la similitud del coseno. 
 	- 'Agrupación por propagación de afinidad'.
 		- Tabla de los artículos ejemplares y sus palabras clave: puede ver las palabras clave asociadas a cada ejemplar y buscar ejemplares por palabras clave. Cuando un ejemplar no está asociado a ninguna palabra clave, aparece "No data available".
 		- Desplegable con los ejemplares: puede seleccionar el ejemplar para analizar el cluster que representa. Se representará su gráfica y una tabla con los PMIDs de los artículos.
-		- Gráfica del ejemplar seleccionado: se representan los artículos del cluster del ejemplar seleccionado con sus PMIDs. Las distancias entre ellos corresponden con la medida del coseno. 
+		- Gráfica del ejemplar seleccionado: se representan los artículos del cluster del ejemplar seleccionado con sus PMIDs. Las distancias entre ellos corresponden con la similitud del coseno. 
 		- Tabla del ejemplar seleccionado: puede ver los PMIDs de los artículos del cluster del ejemplar seleccionado. Puede acceder al artículo en PubMed haciendo clic sobre su PMID.
 - 'Factores influyentes'.
 	- Términos a introducir en el análisis de asociación: puede introducir uno o más términos a la lista inicial. Si introduce más de un término, estos deben ir separados por un espacio. Posteriormente, podrá seleccionar uno de estos términos para analizar su asociación con el resto de términos de la lista.
