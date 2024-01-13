@@ -1570,6 +1570,7 @@ ui <- fluidPage(
                          los términos mencionados sin seleccionar fechas; cada corpus secundario
                          es un subconjunto de dicho corpus primario).", 
                          style = "text-align: justify;"),
+                       HTML("<br><br>"),
                        # Creamos dos 'date widgets' para que el usuario pueda seleccionar 
                        # los periodos de tiempo que quiere comparar. Para ello, empleamos
                        # la función dateRangeInput(). 
@@ -1588,6 +1589,7 @@ ui <- fluidPage(
                        # botón 'Añadir más periodos' (ID 'add_dates'), se añadirá otro dateRangeInput().
                        # Para ello, usamos uiOutput(). 
                        uiOutput("dynamic_date_inputs"),
+                       HTML("<br>"),
                        # Añadimos otro botón para que el usuario pueda eliminar periodos (solo se podrán
                        # eliminar aquellos que han sido añadidos por el usuario, es decir, mínimo debe
                        # haber 2 periodos).
