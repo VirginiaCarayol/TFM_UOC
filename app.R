@@ -325,21 +325,22 @@ append_txt_batch <- function(my_abstracts_download, easyPubMed_data_final) {
 append_txt_batch(my_abstracts_download, "easyPubMed_data_final")
 
 # A continuación, utilizamos la función readabs() del paquete pubmed.mineR para crear 
-# un objeto de clase 'Abstract' y un archivo de texto con encabezados ('Journal', 
-# 'Abstract' y 'PMID') delimitados por tabulaciones (con el nombre de 'newabs.txt').
+# un objeto de clase 'Abstracts' y un archivo de texto con encabezados ('Journal', 
+# 'Abstract' y 'PMID') delimitados por tabulaciones (con el nombre de 'newabs.txt';
+# no se utilizará dicho archivo de texto en este trabajo).
 # Como hemos mencionado, tras concatenar los archivos descargados, en este caso, 
 # "easyPubMed_data_final.txt" (es el nombre que le hemos puesto) contiene toda la 
 # información.
 
 abstract_Object <- readabs(paste(my_dir, "/easyPubMed_data_final.txt", sep = ""))
 
-# Los objetos de clase 'Abstract' contienen tres propiedades, 'Journal', 'Abstract' 
+# Los objetos de clase 'Abstracts' contienen tres propiedades, 'Journal', 'Abstract' 
 # y 'PMID', para almacenar resúmenes de PubMed. En particular, 'Journal' es un objeto 
 # de clase 'character' que almacena las revistas de los resúmenes de PubMed, 'Abstract'
 # es un objeto de clase 'character' que almacena los resúmenes de PubMed, y 'PMID' es 
 # un objeto de clase 'numeric' que almacena los PMIDs de los resúmenes de PubMed. Para
 # acceder a estas propiedades, usamos '@' junto con dicha propiedad a continuación del
-# nombre del objeto de clase 'Abstract'.
+# nombre del objeto de clase 'Abstracts'.
 
 # A continuación, hallamos las principales revistas donde se han publicado los artículos
 # del corpus primario. Para ello, utilizamos la propiedad 'Journal' del objeto de clase 
@@ -509,9 +510,8 @@ link_for_document <- function(PMID_document){
 }
 
 get_document_titles <- function(document_file_names, pmid_title_map) {
-  # Definimos la función get_document_titles(), que extrae los títulos de los artículos
-  # en función de los nombres de los ficheros que se crearon con la función 
-  # separate_and_store_batch() (estos nombres contienen el PMID del artículo en cuestión).
+  # Definimos la función get_document_titles(), que crea un dataframe con los PMIDs
+  # (y sus hiperenlaces a PubMed) y títulos de los artículos filtrados por el usuario.
   # Creamos un dataframe vacío con la función data.frame().
   pmid_titles <- data.frame(matrix(ncol = 2, nrow = 0))
   # Definimos los nombres de las columnas con la función colnames(). 
@@ -780,8 +780,8 @@ influencing_factors <- c("strain", "balbc", "c57bl", "age", "old", "adult", "you
                          "open", "field", "maze", "oft", "elev", "plus", "sucros")
 
 # Antes de continuar, vamos a emplear la función stemCompletion() del paquete tm para
-# completar las palabras derivadas. Esta función recibe los siguientes argumentos: 
-# 'x' (vector de caracteres con las palabras derivadas que queremos completar), 
+# completar las palabras tras la derivación. Esta función recibe los siguientes argumentos: 
+# 'x' (vector de caracteres con las palabras tras la derivación que queremos completar), 
 # 'dictionary' (un Corpus donde buscar las posibles palabras de las que provienen estas
 # derivaciones) y 'type' (una cadena de caracteres indicando las heurísticas a utilizar: 
 # en este caso, utilizamos 'type = "prevalent"', que toma la coincidencia más frecuente
@@ -1055,9 +1055,9 @@ get_words_freqs_for_dates <- function(dates_inputs) {
     # Guardamos el resultado en la lista 'words_for_dates_without_common_words'. 
     words_for_dates_without_common_words <- c(words_for_dates_without_common_words, list(new_df))
   }
-  # Por último, completamos las palabras derivadas. Para ello, empleamos la función 
+  # Por último, completamos las palabras tras la derivación. Para ello, empleamos la función 
   # stemCompletion() del paquete tm. Esta función recibe los argumentos: 'x' (vector 
-  # de caracteres con las palabras derivadas que queremos completar), 'dictionary' 
+  # de caracteres con las palabras tras la derivación que queremos completar), 'dictionary' 
   # (un Corpus donde buscar las posibles palabras de las que provienen estas derivaciones)
   # y 'type' (utilizaremos 'type = "prevalent"'). 
   # Iteramos sobre el vector 'dates_inputs'. 
@@ -1074,7 +1074,7 @@ get_words_freqs_for_dates <- function(dates_inputs) {
     # Aplicamos la función get_influencing_factors_stemCompl() definida anteriormente
     # para crear un vector con las palabras completas tras aplicar la función stemCompletion().
     words_with_stemComp_clean <- get_influencing_factors_stemCompl(words_with_stemComp)
-    # Cambiamos las palabras derivadas por las palabras completas en el dataframe. 
+    # Cambiamos las palabras tras la derivación por las palabras completas en el dataframe. 
     words_for_dates_without_common_words[[i]]$word <- words_with_stemComp_clean
   }
   # Devolvemos la lista 'words_for_dates_without_common_words'.
